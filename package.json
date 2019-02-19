@@ -23,7 +23,7 @@
     "xo": "^0.18.2"
   },
   "files": [
-    "scripts"
+    "scripts","templates","sass"
   ],
   "homepage": "http://graphics.reuters.com/",
   "keywords": [
@@ -44,5 +44,5 @@
     "pub": "np",
     "test": "xo src/**/*.js && xo tests/**/*.js && tape tests/**/*.js | faucet"
   },
-  "version": "1.0.0"
+  "version": "1.0.1"
 }
