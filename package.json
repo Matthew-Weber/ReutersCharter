@@ -1,0 +1,48 @@
+{
+  "author": {
+    "name": "Matthew Weber",
+    "email": "matthew.weber@tr.com",
+    "url": "http://graphics.reuters.com/"
+  },
+  "bugs": {
+    "url": "https://github.com/riccardoscalco/textures/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {},
+  "deprecated": false,
+  "description": "Reuters charter",
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "faucet": "^0.0.1",
+    "jsdom": "^11.3.0",
+    "rollup": "^0.50.0",
+    "rollup-plugin-babel": "^3.0.2",
+    "rollup-plugin-uglify": "^2.0.1",
+    "tape": "^4.8.0",
+    "xo": "^0.18.2"
+  },
+  "files": [
+    "scripts"
+  ],
+  "homepage": "http://graphics.reuters.com/",
+  "keywords": [
+    "data visualisation",
+    "visual"
+  ],
+  "license": "MIT",
+  "module": "scripts/ReutersCharter.js",
+  "name": "ReutersCharter",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Matthew-Weber/ReutersCharter.git"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "pretest": "rollup -c",
+    "pub": "np",
+    "test": "xo src/**/*.js && xo tests/**/*.js && tape tests/**/*.js | faucet"
+  },
+  "version": "1.0.0"
+}

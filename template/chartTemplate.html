@@ -1,0 +1,37 @@
+<%if (t.self.multiDataColumns.length > 1){%>
+	<div class="chart-nav">
+		<div class="navContainer">
+            <div class="btn-group nav-options horizontal" data-toggle="buttons">
+                <%t.self.multiDataColumns.forEach(function(d,i){%>                
+                    <label dataid="<%= d %>" class="btn btn-primary <%if(i==t.self.multiDataLabels.length-1){%>active<%}%> smaller">
+                        <input type="radio" name="nav-options" autocomplete="off"> 
+                        <%=t.self.multiDataLabels[i]%>
+                    </label>
+                <%})%>
+            </div>    		    		
+		</div>    	
+	</div>
+<%}%>
+<%if (t.self.navSpacer){%>
+	<div class="chart-nav">
+		<div class="navContainer spacer"></div>
+	</div>
+<%}%>
+
+<%if (t.self.chartLayoutLables){%>
+	<div class="chart-layout">
+		<div class="layoutNavContainer">
+			<%t.self.chartLayoutLables.forEach(function(d,i){%>
+				<div class="layoutNavButtons <%=d%><%=t.self.chartType%> <%if (i == t.self.chartLayoutLables.length - 1){%>selected<%}%>" dataid="<%=d%>"></div>	
+				
+			<%})%>
+			
+		</div>		
+	</div>
+<%}%>
+<div class="chart-holder 
+	<%if (!t.self.hasLegend){print('no-legend')}%>
+	">
+	<div class="legend nested-legend"></div>
+	<div class="chart nested-chart"></div>
+</div>
