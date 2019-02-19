@@ -1,0 +1,427 @@
+//depth of the chart
+.reuters-chart{
+    margin-top: .5rem;
+    margin-bottom: 15px;
+}
+.chart {
+	position:relative;
+    font-family:$font-family-sans-serif;
+	font-weight:400;
+}
+.nested-chart{
+	left:0;
+	top:0;
+	width:calc(100% - 80px);
+}
+.nested-legend{
+	position:absolute;
+	right:0;
+	top:0;
+	width:80px;
+}
+.no-legend{
+.nested-chart{
+	position: static;
+	width:100%;
+}
+.nested-legend{
+	display:none;
+}
+	
+}
+.navContainer.spacer{
+	min-height: 27px;
+}
+.page-legend{
+	width:100%;
+	height:30px;
+	.legendItems{
+		width:100px;
+		height:30px;
+		position:static;
+		display:inline-block;
+	}
+}
+.chart-holder{
+	position:relative;
+	&.smaller{
+		.chart-nav{
+			margin-bottom:10px;
+		}
+		.nested-chart{
+			width:100% !important;			
+		}
+		
+		.nested-legend{
+			width:100% !important;
+			position: static;
+			min-height: 35px;
+		}
+		.legend-items-holder{
+			display:flex;
+			flex-wrap: wrap-reverse;
+			flex-direction: row-reverse;
+			justify-content: flex-end;
+		}
+		.legendItems{
+			position:static;
+			width:auto;
+			display:block;
+			vertical-align: top;
+			margin-bottom: 0px;
+			margin-right:10px;
+			
+		}
+		.legendInline{
+			width:auto !important;
+		}
+		.legendContainer{
+			.valueTip{
+				display:none;
+			}
+			.dateTip{
+				display:none;
+			}			
+		}
+		.legend-items-holder{
+			min-height:20px;
+		}
+		.reuters-tooltip{
+			display:block !important;
+		}
+		.legend-ital{
+			display:none !important;
+		}
+	}
+}
+
+hr{
+	margin-bottom:0px;
+	margin-top:5px;
+}
+.legendContainer{
+	position:relative;
+    font-size:$font-size-sm;
+
+	.legend-items-holder{
+		position:relative;
+	}
+	.dateTip{
+		font-weight: 400;
+		margin-bottom: 5px;
+		text-transform: uppercase;
+	}
+	.legend-ital{
+		font-style: italic;
+		margin-bottom: 8px;
+		line-height: 1;
+		display:none;		
+	}
+}
+.legendItems{
+	font-size: $font-size-sm;
+	margin-bottom:20px;
+	line-height: 1;
+	position:absolute;
+	cursor:pointer;	
+	transition:all 0.5s;
+
+	width:100%;
+	&.clicked{
+		opacity:0.4;
+	}
+
+	.nameTip{
+		display:inline-block;
+		vertical-align: top;
+		font-weight: 600;
+		margin:0;
+		margin-right:4px;
+		line-height: 1;
+		
+	}
+	.valueTip{
+		font-weight: 400;
+		line-height: 1;
+		margin:0;
+		
+	}
+	.legendInline{
+		display:inline-block;
+		vertical-align: top;
+		width:calc(100% - 15px);
+	}
+	.circleTip{
+		width:10px;
+		height:10px;
+		border-radius: 10px;
+		display:inline-block;
+		vertical-align: top;
+		margin-top: 2px;
+		margin-right:2px;
+		&.line{
+			border-radius: 3px;
+			margin-top: 6px;
+			height:3px;
+		}
+		&.bar{
+			border-radius:0px;
+		}
+	}
+
+	
+	
+}
+
+.layoutNavContainer{
+}
+.layoutNavButtons{
+	width:40px;
+	height:40px;
+	margin-left: 6px;
+	display:inline-block;
+	cursor:pointer;
+	vertical-align: top;
+	margin-bottom: 6px;
+	background-image: url(../images/chartlayouts.png);
+	background-size:200%;		
+	&:first-of-type{
+		margin-left:0px;
+	}
+	&.selected{
+		background-position-x:40px !important;				
+	}
+	&:hover{
+		background-position-x:40px !important;				
+	}
+	&.basicbar{
+		background-position-y:0px;
+	}
+	
+	&.stackTotalbar{
+		background-position-y:-40px;	
+	}
+	
+	&.stackPercentbar{
+		background-position-y:-80px;	
+	}
+	
+	&.sideBySidebar{
+		background-position-y:-120px;	
+	}
+	
+	&.tierbar{
+		background-position-y:-160px;	
+	}
+	
+	&.onTopOfbar{
+		background-position-y:-200px;
+	}
+	
+	&.basicline{
+		background-position-y:-240px;		
+	}
+	
+	&.stackTotalline{
+		background-position-y:-280px;		
+	}
+	
+	&.stackPercentline{
+		background-position-y:-320px;		
+	}
+	
+	&.fillLinesline{	
+		background-position-y:-360px;	
+	}	
+
+}		
+
+.reuters-tooltip {
+	position: absolute;
+	text-align: left;
+	padding:8px;
+	background-color: white;
+	color: black;
+	border: 1px solid black;
+	pointer-events: none; 
+	z-index: 5;
+	font-size: $font-size-xs;
+	max-width:200px;
+	font-family: $font-family-sans-serif;
+	hr{
+		width:100%;
+		margin:5px auto 5px auto;
+		border-top: 1px solid black;
+	}
+	.dateTip{
+		font-weight: 700;
+		margin-bottom: 6px;
+	}
+	.nameTip{
+		display:inline-block;
+		vertical-align: top;
+		font-weight: 600;
+		width:60px;
+		margin:0;
+		margin-right:4px;
+		line-height: 1;
+		
+	}
+	.valueTip{
+		display:inline-block;
+		vertical-align: top;
+		font-weight: 300;
+		max-width:150px;
+		line-height: 1;
+		margin:0;
+		
+	}
+
+	.circleTip{
+		width:10px;
+		height:10px;
+		border-radius: 10px;
+		display:inline-block;
+		vertical-align: top;
+		margin-top: 2px;
+		margin-right:2px;
+		&.line{
+			border-radius: 3px;
+			height:3px;
+		}
+		&.bar{
+			border-radius:0px;
+		}
+
+	}
+	.tipHolder{
+		width:100%;
+		margin-top: 2px;
+	}
+
+}
+
+
+
+.tipCircle{
+	&.highlight{
+		opacity:1 !important;
+	}
+	&.timeline{
+		opacity:1 !important;
+		fill:none !important;
+		stroke:black !important;
+		stroke-width:1.5px !important;
+		&.highlight{
+			fill:black !important;
+		}
+	}	
+}
+
+/*lines and area and plot space*/
+.line {
+  fill: none;
+  stroke: #231F20;
+  stroke-linejoin: round;
+  stroke-linecap:round;
+} 
+.lineChart {
+  .line{
+	  stroke-width:3px;
+	  transition:stroke-width 0.5s, opacity 0.5s;
+  }
+} 
+
+.lineChart:hover {
+	.line{
+		stroke-width:6px;		
+	}
+
+} 
+
+.lineChart.notSelected {
+  opacity:0.4;
+} 
+.lineChart.turnedOff{
+	opacity:0;
+}
+
+.zeroAxis{
+	stroke:black;
+	stroke-width:2px;
+}
+
+/*axis*/
+.axis line, .axiszero line  {
+	fill: none;
+	stroke: $gray-light;
+//	shape-rendering: crispEdges;
+	}
+.y.axis line{
+	stroke:$gray-light;
+}
+.axiszero line {  
+	stroke: $gray-dark;
+	stroke-width: 1.5px;
+	}
+.axis text {
+	font-weight: 400;
+	fill:black;
+	font-family: $font-family-sans-serif ;
+	font-size: $font-size-sm;
+	}
+
+
+.axiszero text, .axis path, .axiszero path {
+  display: none;
+}
+	
+.area, .area2 {
+	opacity:0.8;
+}
+.pollArea{
+	opacity:0.3;
+}	
+.plot{
+fill:white;
+//fill: #F0EEED;
+}
+.states {
+  fill: none;
+  stroke: #ffffff;
+  stroke-linejoin: round;
+}
+.cursorline {
+  stroke: $gray ;
+  stroke-width: 1px;
+}
+.recessionBox {
+  fill: $gray-lighter ;
+}
+
+rect.bar.lighter{
+	opacity:0.6 !important;
+}
+
+.annotation-group{
+	opacity:0.001;
+	transition:opacity 1s;
+	transition-delay:1s;
+	&.active{
+		opacity:1;
+	}
+}
+.annotation-note-label{
+	font-size:$font-size-xs;
+}
+.annotation-note-title{
+	//font-size:$font-size-sm;
+}
+
+.circleTip.bar.outline{
+	background-color: white !important;
+	border: 1.5px solid black;
+}
+.bar.outline{
+	stroke:black;
+}
