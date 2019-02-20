@@ -234,7 +234,12 @@ hr{
 		background-position-y:-360px;	
 	}	
 
-}		
+}	
+.legendContainer{
+	.valueTip{
+		margin-top:5px;
+	}
+}	
 
 .reuters-tooltip {
 	position: absolute;

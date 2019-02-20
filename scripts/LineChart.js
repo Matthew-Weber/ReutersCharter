@@ -77,8 +77,6 @@ class LineChart extends ChartBase {
 	}
 			
 	getYScale () {
-
-		//MATT - should you have XscaleVals as well?  Also, should all of these scale functions be in base chart? Are they going to in fact be different?
 		if (!this.yScaleVals || this.hasZoom){			
 			return d3[`scale${this.yScaleType}`]()
 				.domain(this.yScaleDomain())
@@ -101,7 +99,6 @@ class LineChart extends ChartBase {
 		this.appendAreaPaths();
 		this.appendPointCircles();
 		this.makeZeroLine();
-		this.createSideLayoutAxis();
 		
 		console.log('rendering')
 
@@ -295,54 +292,7 @@ class LineChart extends ChartBase {
 			});
 */
 	}
-	
-	createSideLayoutAxis(){
-		if (this.chartLayout =="sideBySide"){
-			this.axisIsCloned = true;
-			let $xaxis = this.$(`.${this.xOrY}.axis`)
 
-			this.chartData.forEach( (d,i) => {
-				if (i == 0){return}
-				let heightFactor = this.height;
-				let widthFactor = (i * (this[this.widthOrHeight] / this.numberOfObjects())) +this.widthOfBar()/2;
-				if (this.horizontal){
-					heightFactor = (i * (this[this.widthOrHeight] / this.numberOfObjects())) +this.widthOfBar()/2;
-					widthFactor = 0;
-				}
-				$xaxis.clone().attr("transform",`translate(${widthFactor},${heightFactor})`).appendTo($xaxis.parent())				
-				
-			})
-		}
-			
-			
-	}
-	
-
-	udpateSideLayoutAxis(){
-		//MATT need to make horizontal switcing to sidebyside work
-		//Matt need sprite for side by side lines.
-		if (this.chartLayout =="sideBySide"){
-			if (!this.axisIsCloned){
-				this.createSideLayoutAxis();
-				return
-			}	
-			let $xaxis = this.$(`.${this.xOrY}.axis`)
-
-			this.chartData.forEach( (d,i) => {
-				if (i == 0){return}
-				let heightFactor = this.height;
-				let widthFactor = (i * (this[this.widthOrHeight] / this.numberOfObjects())) +this.widthOfBar()/2;
-				if (this.horizontal){
-					heightFactor = (i * (this[this.widthOrHeight] / this.numberOfObjects())) +this.widthOfBar()/2;
-					widthFactor = 0;
-				}
-				$xaxis.eq(i).attr("transform",`translate(${widthFactor},${heightFactor})`)				
-				
-			})
-		}
-			
-			
-	}
 	
 	update(){
 		this.baseUpdate();
@@ -358,7 +308,6 @@ class LineChart extends ChartBase {
 		this.updateCircles();
 		this.updateExitCirclePoints();
 		this.updateEnterCirclePoints();
-		this.udpateSideLayoutAxis();
 		
 	}
 

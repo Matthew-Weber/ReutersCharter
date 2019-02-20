@@ -112,8 +112,6 @@ class DataParser extends EventEmitter {
 		
 	}
 
-	//Matt need to sort groups
-
 	calculateTransofmations(data){
 		
 		if (this.xValue == "category"){
@@ -238,7 +236,7 @@ class DataParser extends EventEmitter {
 				aValue = this.groupSort.indexOf(a.name);
 				bValue = this.groupSort.indexOf(b.name);			
 			}
-			//MATT TEST: let's take invisible things out of the sort.
+
 			if (!a.visible){
 				aValue = -1 * plusMinus;
 			}
@@ -315,7 +313,6 @@ class DataParser extends EventEmitter {
 		return data
 	}
 	
-	//Matt, you need to test this, but basically have to run reSort when you set things to not visible.
 	reSort(data){
 		if (this.xValue == "category"){
 			return this.categorySorter(data)

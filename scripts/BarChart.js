@@ -40,15 +40,9 @@ class BarChart extends ChartBase {
 	}
 		
 	getXScale () {
-		//matt
-		
 		return d3[`scale${this.xScaleType}`]()
 			.domain(this.xScaleDomain())
 			.range(this.xScaleRange())
-			//.round(true)
-			//.paddingInner(1)
-			//.paddingOuter(1)
-
 	}
 	
 	yScaleMin (){
@@ -82,7 +76,6 @@ class BarChart extends ChartBase {
 	
 	yScaleDomain (){
 		let domain = [this.yScaleMin(),this.yScaleMax()];
-		//MATT, what is this doing in terms of a y scale? 
 		if (this.yScaleType == "Point" || this.yScaleType == "Band"){
 			domain = this.chartData[0].values.map( (d) => d.category)
 		}
@@ -90,8 +83,6 @@ class BarChart extends ChartBase {
 	}
 			
 	getYScale () {
-
-		//MATT - should you have XscaleVals as well?  Also, should all of these scale functions be in base chart? Are they going to in fact be different?
 		if (!this.yScaleVals || this.hasZoom){			
 			return d3[`scale${this.yScaleType}`]()
 				.domain(this.yScaleDomain())
@@ -215,9 +206,7 @@ class BarChart extends ChartBase {
 		this.lineGSideBySide();
 		this.appendBars();
 
-		this.makeZeroLine();
-		this.createSideLayoutAxis();
-
+		this.makeZeroLine();		
 		if (this.isPoll){
 			this.addMoe();	
 		}
@@ -293,58 +282,6 @@ class BarChart extends ChartBase {
 		
 	}
 
-	createSideLayoutAxis(){
-		if (this.chartLayout =="sideBySide"){
-			this.axisIsCloned = true;
-			let $xaxis = this.$(`.${this.xOrY}.axis`)
-
-			this.chartData.forEach( (d,i) => {
-				if (i == 0){return}
-				let heightFactor = this.height;
-				let widthFactor = (i * (this[this.widthOrHeight] / this.numberOfObjects())) +this.widthOfBar()/2;
-				if (this.horizontal){
-					heightFactor = (i * (this[this.widthOrHeight] / this.numberOfObjects())) +this.widthOfBar()/2;
-					widthFactor = 0;
-				}
-				$xaxis.clone().attr("transform",`translate(${widthFactor},${heightFactor})`).appendTo($xaxis.parent())				
-				
-			})
-		}
-			
-			
-	}	
-
-	udpateSideLayoutAxis(){
-		//MATT need to make horizontal switcing to sidebyside work
-		//Matt need sprite for side by side lines.
-		if (this.chartLayout =="sideBySide"){
-			if (!this.axisIsCloned){
-				this.createSideLayoutAxis();
-				return
-			}	
-			let $xaxis = this.$(`.${this.xOrY}.axis`)			
-
-			$xaxis.each((i)=>{
-				if (i == 0){return}
-				let heightFactor = this.height;
-				let widthFactor = (i * (this[this.widthOrHeight] / this.numberOfObjects())) +this.widthOfBar()/2;
-				if (this.horizontal){
-					heightFactor = (i * (this[this.widthOrHeight] / this.numberOfObjects())) + (this.widthOfBar()/2);
-					widthFactor = 0;
-				}
-				if (i > this.chartData.length - 1){
-					$xaxis.eq(i).css({display:"none"})
-				}else{
-					$xaxis.eq(i).css({display:"block"})
-				}
-				$xaxis.eq(i).attr("transform",`translate(${widthFactor},${heightFactor})`)				
-				
-			})
-
-		}
-			
-			
-	}
 
 	//////////////////////////////////////////////////////////////////////////////////
 	///// UDPATE.
@@ -357,8 +294,7 @@ class BarChart extends ChartBase {
 		this.updateBarGs();
 		this.updateBars();
 		this.updateBarsExit();
-		this.appendBars();
-		this.udpateSideLayoutAxis();
+		this.appendBars();		
 		if (this.isPoll){
 			this.updateMoe();	
 		}

@@ -4,9 +4,6 @@
     "email": "matthew.weber@tr.com",
     "url": "http://graphics.reuters.com/"
   },
-  "bugs": {
-    "url": "https://github.com/riccardoscalco/textures/issues"
-  },
   "bundleDependencies": false,
   "dependencies": {},
   "deprecated": false,

@@ -8,13 +8,12 @@ import { DataParser } from './DataParser.js'
 import chartTemplate from '../templates/chartTemplate.html'
 import chartLegendTemplate from '../templates/chartLegendTemplate.html'
 import chartTipTemplate from '../templates/chartTipTemplate.html'
-//matt, comments, triggers, what if barchart tries to figure out if it can tickAll itself?
 
 class ChartBase extends EventEmitter {
 		
 	constructor(opts){
 		super();	
-		//matt test this when these become node modules.
+
 		d3.timeFormatDefaultLocale(this.locales(gettext("en")))
 		d3.formatDefaultLocale(this.locales(gettext("en")));
 					
@@ -30,10 +29,11 @@ class ChartBase extends EventEmitter {
 			xOrY : "x",
 			yOrX : "y",
 			leftOrTop : "left",
+			topOrLeft : "top",
 			heightOrWidth : "height",
 			widthOrHeight : "width",
-			topOrLeft : "top",
 			bottomOrRight:"bottom",
+			rightOrBottom:"right",
 			colors:[blue3, purple3,orange3, red3,yellow3],
 			dateFormat: d3.timeFormat("%b %Y"),
 			dateParse:	undefined,
@@ -47,11 +47,13 @@ class ChartBase extends EventEmitter {
 			dataTransformation:"none",
 			xorient:"Bottom",
 			yorient:"Left",
-			tipNumbFormat: (d) => {
-				if (isNaN(d) === true){return "N/A";}else{
-					return `${this.dataLabels[0]}${this.numbFormat(d)}${this.dataLabels[1]}` ;				
-				}				
+			yTickFormatter: (d,i,nodes)=>{
+				return this.yTickFormat(d,i,nodes)
 			},
+		
+			xTickFormatter: (d,i,nodes)=>{
+				return this.xTickFormat(d,i,nodes)
+			},			
 			YTickLabel: [["",""]],
 			numbFormat: d3.format(",.0f"),
 			lineType: "Linear",
@@ -63,7 +65,6 @@ class ChartBase extends EventEmitter {
 			animateOnScroll:false,
 			chartLayout:"basic",
 			multiFormat: (date) => {
-				//matt check singapore.  don't love weekdays
 				let formatMillisecond = d3.timeFormat(".%L"),
 				    formatSecond = d3.timeFormat(":%S"),
 				    formatMinute = d3.timeFormat("%I:%M"),
@@ -205,7 +206,6 @@ class ChartBase extends EventEmitter {
 	
 	setOptions (data) {
 		this.$el = $(this.el)
-		this.setOptFormats();
 		this.setOptPolling();			
 		this.setOptMultiData(data);		
 		this.setOptCategory(data);
@@ -228,39 +228,11 @@ class ChartBase extends EventEmitter {
 		this.setOptPolling();
 
 	}
-	setOptFormats(){
 
-		this.yTickFormat = (d,i,nodes) => {
-			if (this[`${this.yOrX}Value`] == "date"){
-				if (this.quarterFormat){
-					return this.quarterAxisFormater(d);
-				}					
-				return this.multiFormat(d)
-			}
-			let s = this.numbFormat(d)
-			if (this[`${this.yOrX}Value`] == "category"){ s = d}
-			if (!this.horizontal){
-				return nodes[i].parentNode.nextSibling
-					? "\xa0" + s
-					: this.dataLabels[0] + s;					
-			}else{ return s }
-	    }
-		this. xTickFormat = (d,i,nodes) => {
-			if (this[`${this.xOrY}Value`] == "date"){
-				if (this.quarterFormat){
-					return this.quarterAxisFormater(d);
-				}
-				return this.multiFormat(d)
-			}
-			let s = this.numbFormat(d)
-			if (this[`${this.xOrY}Value`] == "category"){ s = d}
-			if (this.horizontal){
-				return nodes[i].parentNode.nextSibling
-					? "\xa0" + s
-					: this.dataLabels[0] + s;					
-			}else{ return s }
-	    }
-
+	tipNumbFormat (d) {
+		if (isNaN(d) === true){return "N/A";}else{
+			return `${this.dataLabels[0]}${this.numbFormat(d)}${this.dataLabels[1]}` ;				
+		}				
 	}
 
 	setOptMultiData (data){
@@ -507,6 +479,7 @@ class ChartBase extends EventEmitter {
 	
 	baseRender () {
 		this.barCalculations();
+		this.renderChartLayoutButtons();		
 		this.appendSVG();
 		this.appendPlot();
 		this.appendClip();
@@ -519,7 +492,6 @@ class ChartBase extends EventEmitter {
 		this.renderAxis();
 		this.renderLegend();
 		this.renderMultiButtons();
-		this.renderChartLayoutButtons();		
 		this.renderTooltips();
 		
 		this.renderEvents();
@@ -615,7 +587,6 @@ class ChartBase extends EventEmitter {
 	
 	recessionMaker (){
 		//put in the recessions, if there are any.
-		//MATT make these change for horizontal.
 		if (!this.hasRecessions){
 			return;
 		}
@@ -645,6 +616,38 @@ class ChartBase extends EventEmitter {
 	///// AXIS.
 	//////////////////////////////////////////////////////////////////////////////////  	
 
+	yTickFormat (d,i,nodes) {
+		if (this[`${this.yOrX}Value`] == "date"){
+			if (this.quarterFormat){
+				return this.quarterAxisFormater(d);
+			}					
+			return this.multiFormat(d)
+		}
+		let s = this.numbFormat(d)
+		if (this[`${this.yOrX}Value`] == "category"){ s = d}
+		if (!this.horizontal){
+			return nodes[i].parentNode.nextSibling
+				? "\xa0" + s
+				: this.dataLabels[0] + s;					
+		}else{ return s }
+    }
+    
+	xTickFormat  (d,i,nodes)  {
+		if (this[`${this.xOrY}Value`] == "date"){
+			if (this.quarterFormat){
+				return this.quarterAxisFormater(d);
+			}
+			return this.multiFormat(d)
+		}
+		let s = this.numbFormat(d)
+		if (this[`${this.xOrY}Value`] == "category"){ s = d}
+		if (this.horizontal){
+			return nodes[i].parentNode.nextSibling
+				? "\xa0" + s
+				: this.dataLabels[0] + s;					
+		}else{ return s }
+    }			
+	
 	
 	getXAxis (){
 		//create and draw the x axis
@@ -652,7 +655,7 @@ class ChartBase extends EventEmitter {
 	    	.scale(this.scales[this.xOrY])
 		    .ticks(this[`${this.xOrY}ScaleTicks`])
 		    .tickPadding(8)
-		    .tickFormat(this.xTickFormat);
+		    .tickFormat(this.xTickFormatter);
 		
 		//change the tic size if it's sideways    
 		if (this.horizontal){
@@ -670,7 +673,6 @@ class ChartBase extends EventEmitter {
 				}
 			});
 		}	
-		//MATT should you have xscale vals as well?
 		
 	}
 	
@@ -680,7 +682,7 @@ class ChartBase extends EventEmitter {
 	    	.scale(this.scales[this.yOrX])
 		    .ticks(this[`${this.yOrX}ScaleTicks`])
 		    .tickPadding(8)		    
-		    .tickFormat(this.yTickFormat);		
+		    .tickFormat(this.yTickFormatter);		
 
 		if (this.yorient == "Right"){
 			this.yAxis
@@ -701,6 +703,16 @@ class ChartBase extends EventEmitter {
 	}
 	
 	appendXAxis(){
+		this.customXAxis = (g) =>{
+			let s = g.selection ? g.selection() : g;
+			g.call(this.xAxis)
+			s.select(".domain").remove();
+			if (this.horizontal){
+				s.selectAll(".tick:last-of-type text").attr("text-anchor", "end")
+			}
+			if (s !== g) g.selectAll(".tick text").attrTween("x", null).attrTween("dy", null);		
+		}
+		
 		this.addXAxis = this.svg.append("svg:g")
 		    .attr("class", "x axis")		
 	        .attr("transform", (d,i) => {
@@ -715,7 +727,7 @@ class ChartBase extends EventEmitter {
 				if (this.chartLayout != "sideBySide"){ i = 0;}
 			    return `translate(${((i * (this[this.widthOrHeight] / this.numberOfObjects()))+sideAdjust)},${toptrans})`	
 		     })
-	        .call(this.xAxis);				
+	        .call(this.customXAxis);				
 	}
 	
 	appendYAxis(){
@@ -776,7 +788,6 @@ class ChartBase extends EventEmitter {
 
 		if (ticksWidth > this.width){
 			if (this.horizontal){
-				//matt, this was hard X before. test this out. make sure doesn't make crazy on horizontal 
 				this[`${this.xOrY}Axis`].ticks(3);				
 			}else{
 				this[`${this.xOrY}Axis`].ticks(2);				
@@ -796,7 +807,7 @@ class ChartBase extends EventEmitter {
 	
 	topTick(tickLabels){
 		let paddedLabel = tickLabels[1]
-		if (paddedLabel != "%"){paddedLabel = "\u00A0"+"\u00A0"+tickLabels[1]}
+		if (paddedLabel != "%" && paddedLabel != ""){paddedLabel = "\u00A0"+"\u00A0"+tickLabels[1]}
 		d3.selectAll(`#${this.targetDiv} .topTick`).remove();
 
 		let topTick =  $(`#${this.targetDiv} .${this.yOrX}.axis .tick:last-of-type`).find("text");
@@ -810,6 +821,27 @@ class ChartBase extends EventEmitter {
 		}		
 		
 	}
+	
+	createSideLayoutAxis(){
+		if (this.chartLayout =="sideBySide"){
+			this.axisIsCloned = true;
+			let $xaxis = this.$(`.${this.xOrY}.axis`)
+
+			this.chartData.forEach( (d,i) => {
+				if (i == 0){return}
+				let heightFactor = this.height;
+				let widthFactor = (i * (this[this.widthOrHeight] / this.numberOfObjects())) +this.widthOfBar()/2;
+				if (this.horizontal){
+					heightFactor = (i * (this[this.widthOrHeight] / this.numberOfObjects())) +this.widthOfBar()/2;
+					widthFactor = 0;
+				}
+				$xaxis.clone().attr("transform",`translate(${widthFactor},${heightFactor})`).appendTo($xaxis.parent())				
+				
+			})
+		}
+			
+			
+	}	
 		
 	renderAxis (){
 		
@@ -819,6 +851,7 @@ class ChartBase extends EventEmitter {
 		this.appendYAxis();		
 		this.adjustXTicks();
 		this.topTick(this.dataLabels);
+		this.createSideLayoutAxis();
 
 	}
 	
@@ -936,11 +969,11 @@ class ChartBase extends EventEmitter {
 	
 	renderChartLayoutButtons(){
 
-    	if (!this.chartLayoutLables){ 
+    	if (!this.chartLayoutLabels){ 
 	    	return;
     	}
     	
-    	this.chartLayout = this.chartLayoutLables[this.chartLayoutLables.length -1]
+    	this.chartLayout = this.chartLayoutLabels[this.chartLayoutLabels.length -1]
 
 		this.$(".layoutNavButtons").on("click", (evt) => {
 			let $el = $(evt.currentTarget);
@@ -951,7 +984,7 @@ class ChartBase extends EventEmitter {
 			
 		    this.chartLayout= thisID;
 			
-			let index = this.chartLayoutLables.indexOf(thisID);
+			let index = this.chartLayoutLabels.indexOf(thisID);
 
 			//get the right data labels
 			if (this.YTickLabel[index]){
@@ -1123,19 +1156,6 @@ class ChartBase extends EventEmitter {
 			rangeArray.push(this.scales.x(d))
 		})
 		rangeArray.forEach( (d,i) => {
-			let include = false;
-
-/*
-			this.chartData[0].values.forEach( (item) => {
-				if (item.category == this.scales.x.domain()[i]){
-					let include = false;
-					this.columnNames.forEach( (col) => { if (d[col]){include = true} })							
-				}
-			})
-			
-			if (!include && !this.showZeros){return}
-*/				
-			
 			if ( closestRange === null || Math.abs(d-this.indexLocation) < Math.abs(closestRange - this.indexLocation)){
 				closestRange = d;
 			}
@@ -1215,10 +1235,10 @@ class ChartBase extends EventEmitter {
 				if (this.horizontal){
 					tipWidth = this.$(".reuters-tooltip").outerHeight();
 				}
-				if (this.xPointCursor < (this.margin.left + this.width + this.margin.right) / 2){
-					return this.margin[this.leftOrTop] + this.scales.x(this.closestDate) + this.toolTipModifier+ this.widthsOver + 15 + "px";
+				if (this.xPointCursor < (this.margin[this.leftOrTop] + this[this.widthOrHeight] + this.margin[this.rightOrBottom]) / 2){
+					return (this.margin[this.leftOrTop] + this.scales.x(this.closestDate) + this.widthsOver + 15) + "px";
 				}else{
-					return this.scales.x(this.closestDate) + this.toolTipModifier - tipWidth +15  + "px";
+					return (this.scales.x(this.closestDate) - tipWidth +15)  + "px";
 				}						
 			})
 			.style(this.topOrLeft, (d) => {
@@ -1226,13 +1246,18 @@ class ChartBase extends EventEmitter {
 				if (this.horizontal){
 					 toolTipHeight = this.$(".reuters-tooltip").outerWidth();
 				}
-				if (this.yPointCursor > (this.margin.top + this.height + this.margin.bottom) * 2 / 3){
+				let fullWidth = this.margin[this.topOrLeft] + this[this.heightOrWidth] + this.margin[this.bottomOrRight];
+				
+				if (this.yPointCursor > (fullWidth * 2 / 3)){
 					return this.yPointCursor - toolTipHeight -20 + "px";
 				} 					
-				if (this.yPointCursor < (this.margin.top + this.height + this.margin.bottom) / 3){
+				if (this.yPointCursor < (fullWidth / 3)){
 					return this.yPointCursor  + "px";
 				}
-					return this.yPointCursor - toolTipHeight/2 + "px";
+				
+				return this.yPointCursor - toolTipHeight/2 + "px";
+
+
 			});
 		
 	}
@@ -1284,6 +1309,7 @@ class ChartBase extends EventEmitter {
 			if (this.tipHighlight){
 				this.tipHighlight.remove();
 			}
+
 			this.tipHighlight = this.lineChart.selectAll(".tipHighlightCircle")
 				.data(this.makeTipData())
 				.enter()
@@ -1455,6 +1481,7 @@ class ChartBase extends EventEmitter {
 		this.updateYScales();
 		this.updateXAxis(duration);
 		this.updateYAxis(duration);
+		this.updateSideLayoutAxis();
 		if (this.zeroLine){
 			this.updateZeroLine(duration);
 		}
@@ -1594,6 +1621,15 @@ class ChartBase extends EventEmitter {
 		if (this.updateCount > 0 || this.firstRun){
 			this.adjustXTicks()
 		}
+		this.customXAxis = (g) =>{
+			let s = g.selection ? g.selection() : g;
+			g.call(this.xAxis)
+			s.select(".domain").remove();
+			if (this.horizontal){
+				s.selectAll(".tick:last-of-type text").attr("text-anchor", "end")
+			}
+			if (s !== g) g.selectAll(".tick text").attrTween("x", null).attrTween("dy", null);		
+		}		
 
 	    d3.selectAll(`#${this.targetDiv} .x.axis`)
 			.transition("xAxisTransition")
@@ -1610,7 +1646,7 @@ class ChartBase extends EventEmitter {
 				if (this.chartLayout != "sideBySide"){ i = 0;}
 			    return `translate(${((i * (this[this.widthOrHeight] / this.numberOfObjects()))+sideAdjust)},${toptrans})`	
 		     })
-	        .call(this.xAxis);					
+	        .call(this.customXAxis);					
 	}	
 	
 	updateYAxis(duration){
@@ -1669,6 +1705,48 @@ class ChartBase extends EventEmitter {
 		
 		
 	}	
+
+	updateSideLayoutAxis(){
+		if (this.chartLayout =="sideBySide"){
+			if (!this.axisIsCloned){
+				this.createSideLayoutAxis();
+				return
+			}	
+			let $xaxis = this.$(`.${this.xOrY}.axis`)			
+
+			$xaxis.each((i)=>{
+				if (i == 0){return}
+				let heightFactor = this.height;
+				
+				let widthFactor = (i * (this[this.widthOrHeight] / this.numberOfObjects())) +this.widthOfBar()/2;
+				if (this.horizontal){
+					heightFactor = (i * (this[this.widthOrHeight] / this.numberOfObjects())) + (this.widthOfBar()/2);
+					widthFactor = 0;
+				}
+				if (i > this.chartData.length - 1){
+					$xaxis.eq(i).css({display:"none"})
+				}else{
+					$xaxis.eq(i).css({display:"block"})
+				}
+				$xaxis.eq(i).attr("transform",`translate(${widthFactor},${heightFactor})`)				
+				
+			})
+
+		}
+		if (this.chartLayoutLabels){
+			if (this.chartLayoutLabels.indexOf("sideBySide") > -1 && this.chartLayout !="sideBySide"){
+				let $xaxis = this.$(`.${this.xOrY}.axis`)			
+	
+				$xaxis.each((i)=>{
+					if (i == 0){return}
+					$xaxis.eq(i).css({display:"none"})
+				})
+			}
+			
+		}
+			
+			
+	}
 		
 	locales(lang) {
 		let locales = {

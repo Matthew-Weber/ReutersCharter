@@ -18,11 +18,11 @@
 	</div>
 <%}%>
 
-<%if (t.self.chartLayoutLables){%>
+<%if (t.self.chartLayoutLabels){%>
 	<div class="chart-layout">
 		<div class="layoutNavContainer">
-			<%t.self.chartLayoutLables.forEach(function(d,i){%>
-				<div class="layoutNavButtons <%=d%><%=t.self.chartType%> <%if (i == t.self.chartLayoutLables.length - 1){%>selected<%}%>" dataid="<%=d%>"></div>	
+			<%t.self.chartLayoutLabels.forEach(function(d,i){%>
+				<div class="layoutNavButtons <%=d%><%=t.self.chartType%> <%if (i == t.self.chartLayoutLabels.length - 1){%>selected<%}%>" dataid="<%=d%>"></div>	
 				
 			<%})%>
 			
