@@ -13,10 +13,12 @@ class ChartBase extends EventEmitter {
 		
 	constructor(opts){
 		super();	
-
+		
+		//sets time format and number format as per the locale in PO file.
 		d3.timeFormatDefaultLocale(this.locales(gettext("en")))
 		d3.formatDefaultLocale(this.locales(gettext("en")));
-					
+		
+		//object of defaults that get applied to the class			
 		this.defaults = {
 			hasPym:true,
 			dataType:'value',
@@ -53,7 +55,9 @@ class ChartBase extends EventEmitter {
 		
 			xTickFormatter: (d,i,nodes)=>{
 				return this.xTickFormat(d,i,nodes)
-			},			
+			},
+			includeXAxis:true,
+			includeYAxis:true,			
 			YTickLabel: [["",""]],
 			numbFormat: d3.format(",.0f"),
 			lineType: "Linear",
@@ -93,6 +97,7 @@ class ChartBase extends EventEmitter {
 		_.each(opts, (item, key) => {
 			this[key] = item;
 		});
+		//after defaults and options from charter block applied, load data
 		this.loadData();
 		
 		return this;	
@@ -107,7 +112,7 @@ class ChartBase extends EventEmitter {
 	//////////////////////////////////////////////////////////////////////////////////    
     	
 	loadData () {
-
+		//test if trying to load csv, or sheets url, or just passing in ready made object
 		if (this.dataURL.indexOf("csv") == -1 && !_.isObject(this.dataURL)){
 			d3.json(this.dataURL).then( (data) => {
 			  this.parseData (data);
@@ -127,11 +132,18 @@ class ChartBase extends EventEmitter {
 	}
 
 	parseData (data) {
-		data = JSON.parse(JSON.stringify(data));
+		this.emit("data:parsing", this)
 
+		//make deep copy of data, in case using object in several charts
+		data = JSON.parse(JSON.stringify(data));
+		//if it's datastream will reconfigure datastream raw data to charter format
 		this.setDataStream(data);		
+		//run through setting properties on class based on options chosen in charter block.
 		this.setOptions(this.data);
 		
+		//run dataParser.  For line and bar charts makes an array of objects for each column header being plotted, and array of data points under value.
+		//see dataparser module.
+		//if there is multidatacolumns will make a copy of the data under each "type" in data.  and set the current one to this.data.
 		this.multiDataColumns.forEach( (d) => {
 			let currentData = _.groupBy(this.data,"type")[d] || JSON.parse(JSON.stringify(this.data));
 			this[d] = new DataParser({
@@ -152,20 +164,20 @@ class ChartBase extends EventEmitter {
 		})
 
 		this.data = this[ this.multiDataColumns[this.multiDataColumns.length - 1] ]
-
+		//chart data is different then main data in that it removes any data columns that are filtered out (pressed on legend button, for instance)  also re-runs the sorts and the stack bar logic upon removal or addition of data.
 		this.chartData = this.makeChartData (this.data)
 		
+		//renders all the things.  Render is called from extended chart.  is not in base chart.
 		this.baseRender();
 		this.render()
 
-		
-		//console.log(this.chartData)
 		
 		this.emit("data:parsed", this)
 		
 	}
 	
 	setDataStream(data){
+		//parses data stream data, see datastreamparse module.
 		if (this.dataStreamOpts){
 			//if (!_.isObject(this.dataStreamOpts)){this.dataStreamOpts = {}}
 			this.dataStreamOpts.data = data;
@@ -177,7 +189,7 @@ class ChartBase extends EventEmitter {
 	
 	
 	makeChartData (data){
-		
+		//reruns data sorts and stacks to account for new or removed data.
 		let filtered = data.filter( (d) => d.visible )
 		
 		filtered = new DataParser({
@@ -205,6 +217,9 @@ class ChartBase extends EventEmitter {
 	//////////////////////////////////////////////////////////////////////////////////  
 	
 	setOptions (data) {
+		this.emit("chart:settingOptions", this)
+
+		//sets piles of options based on chart block options and data.
 		this.$el = $(this.el)
 		this.setOptPolling();			
 		this.setOptMultiData(data);		
@@ -226,32 +241,38 @@ class ChartBase extends EventEmitter {
 		this.setOptDataLabels();
 		this.setOptQuarterFormat();
 		this.setOptPolling();
+		
+		this.emit("chart:optionsSet", this)
 
 	}
 
 	tipNumbFormat (d) {
+		//what returns in the value div of the tooltip and the legend.  Can override the defaults here or make logic tests. 
 		if (isNaN(d) === true){return "N/A";}else{
 			return `${this.dataLabels[0]}${this.numbFormat(d)}${this.dataLabels[1]}` ;				
 		}				
 	}
 
 	setOptMultiData (data){
-
+		//if multidatacolumns is mapped object, breaks appart to two matched arrays.
 		if (_.isObject(this.multiDataColumns) && !_.isArray(this.multiDataColumns)){
 			this.multiDataLabels = _.values(this.multiDataColumns);
 			this.multiDataColumns = _.keys(this.multiDataColumns);
 		}
-		
+		//if multidatacolumns is undefined, tries to make them from the type column in data.
 		if (data[0].type && !this.multiDataColumns){
 			this.multiDataColumns = _.uniq(_.map(data, 'type'));
 		}
+		//if you've defined multidatacolumns, but there is no type column in data, chances are you are trying to toggle transformations.  adjusts for that.
 		if (this.multiDataColumns && !data[0].type){
 			this.dataType = this.multiDataColumns[this.multiDataColumns.length-1]
 			this.multiTransforms = true;
 		}
+		//if you've gotten this far, and there are no explicit labels, sets labels to match raw column names.
 		if (!this.multiDataLabels && this.multiDataColumns){
 			this.multiDataLabels = this.multiDataColumns;
 		}
+		//if no multi at all, sets one of just data, so that data can render through on loop.
 		if (!this.multiDataColumns){
 			this.multiDataColumns = ["data"]
 		}		
@@ -273,6 +294,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	setOptHorizontal(){
+		//horizontal charts basically invert all directional values.
 		if (this.horizontal){
 			this.xOrY = "y";
 			this.yOrX = "x";
@@ -285,7 +307,8 @@ class ChartBase extends EventEmitter {
 		}
 	}
 
-	setOptDataTransforms (){		
+	setOptDataTransforms (){
+		//i use dataType internally, but decided that was hard to understand in block, so basically i'm just taking in that option and resetting.		
 		if (this.dataTransformation != "none"){
 			this.dataType = this.dataTransformation;
 		}		
@@ -305,6 +328,7 @@ class ChartBase extends EventEmitter {
 	
 	setOptChartColumns(data){
 		//Define columns of data to chart, and the names to display
+		//same logic as above, trying to determine if they are dfined ata ll, if they are an object, or if arrays.
 		if (!this.columnNames){
 			this.columnNames = _.keys(data[0]).filter( (d) => (d != "date" && d != "category"  && d !== "type"  && d !== "rawDate" && d !== "displayDate") );
 			this.columnNamesDisplay = this.columnNames;
@@ -319,7 +343,8 @@ class ChartBase extends EventEmitter {
 	}
 	
 	setOptColorScales(){		
-		//Define Color Scale		
+		//Define Color Scale
+		//again, if object, make domain and range from object keys and values.  otherwise use columnNames from above as domain, and array of colors as colors.		
 		this.colorScale = d3.scaleOrdinal();				
 		if (_.isObject(this.colors) && !_.isArray(this.colors)){
 			this.colorScale.domain(_.keys(this.colors));
@@ -332,12 +357,14 @@ class ChartBase extends EventEmitter {
 	}
 
 	setOptHasLegend(){
+		//turns off the legend if plotting only one thing.  Unless legend specifically asked for in block.
 		if (this.columnNames.length == 1 && !this.options.hasLegend){
 			this.hasLegend = false;
 		}		
 	}	
 	
 	renderBaseTemplate(){
+		//woohoo we actually render the base html.  
 		this.$el.html(this.chartTemplate({self:this}))
 	}
 
@@ -350,8 +377,15 @@ class ChartBase extends EventEmitter {
 		this.$legendEl = $(`#${this.legendDiv}`);
 		this.masterWidth = this.$el.width();
 	}
-	
+
+	setOptBreakpoint (){
+		//if top legend selected, just sets an outrageous breakpoint.
+		if (this.topLegend){
+			this.chartBreakPoint = 3000;
+		}
+	}	
 	checkLegendBreakpoint(){
+		//if width of chart drops below certain point, moves legend up top. w/ smaller class.  Activates tooltip, unless specifically required to not have one via options.
 		if (!this.hasLegend){return}
 		if (this.$el.width() < this.chartBreakPoint){
 			this.$el.find('.chart-holder').addClass("smaller");
@@ -393,23 +427,20 @@ class ChartBase extends EventEmitter {
 		}
 	}
 	
-	setOptBreakpoint (){
-		if (this.topLegend){
-			this.chartBreakPoint = 3000;
-		}
-	}
-	
 	setOptDataLabels(){
+		//datalabels are the current y axis labels.  Sets to the last one in the array as default.
 		this.dataLabels = this.YTickLabel[this.YTickLabel.length-1];				
 	}
 	
 	setOptQuarterFormat(){
+		//if quarterformat, then replaces the date formatter.
 		if (this.quarterFormat){
 			this.dateFormat = this.quarterFormater
 		}		
 	}
 
 	quarterFormater (d){
+		//formats the dates to quarters for display in tooltips and legends.
 		let yearformat = d3.timeFormat(" %Y")	
 		let monthformat = d3.timeFormat("%m")
 		let quarters = {
@@ -430,6 +461,7 @@ class ChartBase extends EventEmitter {
 	}	
 
 	quarterAxisFormater (d){
+		//samsies, but for axis, year is only shown on q1
 		let yearformat = d3.timeFormat(" '%y")	
 		let monthformat = d3.timeFormat("%m")
 		let quarters = {
@@ -451,7 +483,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	setOptPolling(){
-		
+		//if this is a polling chart, lots of options get overridden.
 		if (this.isPoll && this.chartType == "line"){this.chartLayout = "fillLines";}		
 		if (this.isPoll && this.chartType != "line" && this.leftBarCol){
 			this.moeLabelObj = this.options.columnNames;
@@ -478,6 +510,8 @@ class ChartBase extends EventEmitter {
 	//////////////////////////////////////////////////////////////////////////////////  	
 	
 	baseRender () {
+		this.emit("chart:renderingBase", this)
+
 		this.barCalculations();
 		this.renderChartLayoutButtons();		
 		this.appendSVG();
@@ -499,19 +533,23 @@ class ChartBase extends EventEmitter {
 		if (this.annotations){
 			this.labelAdder();
 		}
-
+		//after rendering we run an update w/ the transition time as one second.  basically, we need to render the whole chart so we can figure out how big the margins actually need to be, and once that is accomplished, we can rerender the whole thing with these new margins.
 		this.baseUpdate(1);			
 
+		this.emit("chart:baseRendered", this)
 				
 	}
 	
 	numberOfObjects (){ 
+		//calculates how many values you are plotting.  changes as you add and remove items.
+		//fudge for some layouts, even though multiple items, act as if there is only one.
 		if (this.chartLayout == "onTopOf" || this.chartLayout == "outlineBar"){ return 1; }else{
 			return this.chartData.length;
 		}
 	}
 
 	widthOfBar (){
+		//determines how big a bar should be, based on how many data points, width of the chart area and chart layout.
 		if (this.chartLayout == "stackTotal" || this.chartLayout == "stackPercent"){
 			return (this[this.widthOrHeight] / (this.dataLength)) - (this[this.widthOrHeight] / (this.dataLength)) * 0.2;
 		}else{				
@@ -520,6 +558,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	barCalculations(){
+		//this seems silly, but essentially need to know how many data points are in the data, but each series being plotted may have different amounts of data points, so this loops through and finds the longest one.
 		this.dataLength = 0;		
 		this.chartData.forEach( (d) => {
 			if( d.values.length > this.dataLength){
@@ -529,6 +568,7 @@ class ChartBase extends EventEmitter {
 	}	
 	
 	appendSVG(){
+		//add the svg, then append a g tag and transform it via the margins.
 		this.baseSVG = d3.select(`#${this.chartDiv}`).append("svg")
 			.attrs({
 				width: this.width + this.margin.left + this.margin.right,
@@ -541,6 +581,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	appendPlot(){
+		//this is a rectangle in the background.  Is useful for zoom events, which i'm not currently doing, but who knows.
 		this.svg.append("svg:rect")
 			.attrs({
 				width:this.width,
@@ -551,6 +592,7 @@ class ChartBase extends EventEmitter {
 	}
 
 	appendClip(){
+		//clipping path to not have things floating outside the scale.
 		 this.clip = this.svg.append("svg:clipPath")
 		    .attr("id", `clip${this.targetDiv}`)
 		    .append("svg:rect")
@@ -564,7 +606,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	makeZeroLine (){
-
+		//adds a zero line, if zero is plotted.  i could and shold probaly just update this into the way the axis draws honestly.
 		this.zeroLine = this.svg.append("line")
 			.attrs({
 				"class":"zeroAxis",
@@ -580,7 +622,8 @@ class ChartBase extends EventEmitter {
 	}
 	
 
-	getRecessionData (){		
+	getRecessionData (){
+		//returns the data for all the recessions.  Could overwrite this and plot any array of gray rectangles.		
 		return [{"start":"5/1/1937","end":"6/1/1938"},{"start":"2/1/1945","end":"10/1/1945"},{"start":"11/1/1948","end":"10/1/1949"},{"start":"7/1/1953","end":"5/1/1954"},{"start":"8/1/1957","end":"4/1/1958"},{"start":"4/1/1960","end":"2/1/1961"},{"start":"12/1/1969","end":"11/1/1970"},{"start":"11/1/1973","end":"3/1/1975"},{"start":"1/1/1980","end":"7/1/1980"},{"start":"7/1/1981","end":"11/1/1982"},{"start":"7/1/1990","end":"3/1/1991"},{"start":"3/1/2001","end":"11/1/2001"},{"start":"12/1/2007","end":"6/1/2009"}]
 
 	}
@@ -590,7 +633,6 @@ class ChartBase extends EventEmitter {
 		if (!this.hasRecessions){
 			return;
 		}
-
 		const recessionData = this.getRecessionData();	
 		this.recessions = this.svg.append('g')
 			.attrs({
@@ -605,10 +647,10 @@ class ChartBase extends EventEmitter {
 			.append("rect")
 			.attrs({
 				class:"recessionBox",
-				x:(d) => (this.scales.x(this.recessionDateParse(d.start))),
-				y:0,
-				width:(d) => (this.scales.x(this.recessionDateParse(d.end))) - (this.scales.x(this.recessionDateParse(d.start))),
-				height:this.height
+				[this.xOrY]:(d) => (this.scales.x(this.recessionDateParse(d.start))),
+				[this.yOrX]:0,
+				[this.widthOrHeight]:(d) => (this.scales.x(this.recessionDateParse(d.end))) - (this.scales.x(this.recessionDateParse(d.start))),
+				[this.heightOrWidth]:this[this.heightOrWidth]
 			});		
 	}
 
@@ -617,6 +659,9 @@ class ChartBase extends EventEmitter {
 	//////////////////////////////////////////////////////////////////////////////////  	
 
 	yTickFormat (d,i,nodes) {
+		//format for y axis.  if it's date, will use multiformat, or quarter format.
+		//if category, will just return itself.
+		//otherwise, it's a number so it's going to put in the data labels, unless it's horizontal.
 		if (this[`${this.yOrX}Value`] == "date"){
 			if (this.quarterFormat){
 				return this.quarterAxisFormater(d);
@@ -633,6 +678,7 @@ class ChartBase extends EventEmitter {
     }
     
 	xTickFormat  (d,i,nodes)  {
+		//samsies, but opposite logic on adding data lables, only horizontal.
 		if (this[`${this.xOrY}Value`] == "date"){
 			if (this.quarterFormat){
 				return this.quarterAxisFormater(d);
@@ -672,7 +718,11 @@ class ChartBase extends EventEmitter {
 					this.smallDateDomain.push(d.date);	
 				}
 			});
-		}	
+		}
+		//explicitely set the xvalue.  no worky on category.
+		if (this.xScaleVals && !this.hasZoom){	
+			this[`${this.xOrY}Axis`].tickValues(this.xScaleVals);
+		}			
 		
 	}
 	
@@ -684,11 +734,12 @@ class ChartBase extends EventEmitter {
 		    .tickPadding(8)		    
 		    .tickFormat(this.yTickFormatter);		
 
+		//fixes padding if on other side
 		if (this.yorient == "Right"){
 			this.yAxis
 			.tickPadding(20);
 		}	
-		
+		//tick size is different depending on layout
 		if (!this.horizontal){
 			this.yAxis.tickSize(0-this.width);
 		}else{
@@ -703,6 +754,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	appendXAxis(){
+		//calling custom axis allows you to control style aspects inside of the transition.  for x axis, main thing is horizontal, make last tick right justified.
 		this.customXAxis = (g) =>{
 			let s = g.selection ? g.selection() : g;
 			g.call(this.xAxis)
@@ -712,7 +764,7 @@ class ChartBase extends EventEmitter {
 			}
 			if (s !== g) g.selectAll(".tick text").attrTween("x", null).attrTween("dy", null);		
 		}
-		
+		//translates the x axis to where it belongs and calls it.
 		this.addXAxis = this.svg.append("svg:g")
 		    .attr("class", "x axis")		
 	        .attr("transform", (d,i) => {
@@ -731,6 +783,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	appendYAxis(){
+		//like x axis, custom transitions the setup of the ticks.  pushes them to the left, pushes up the text, accounts for horizontal.
 		this.customYAxis = (g) =>{
 			let s = g.selection ? g.selection() : g;
 			g.call(this.yAxis)
@@ -744,7 +797,7 @@ class ChartBase extends EventEmitter {
 			if (s !== g) g.selectAll(".tick text").attrTween("x", null).attrTween("dy", null);		
 		}
 
-
+		//transform based on orientation.
 		this.addYAxis = this.svg.append("svg:g")
 		    .attr("class", "y axis")			
         	.attr("transform", (d,i) => {
@@ -765,7 +818,8 @@ class ChartBase extends EventEmitter {
 	
 
 	adjustXTicks (){
- 
+		//need to figure this out on horizontal.  basically is a loop that adds up the widths of all the x ticks and checks them against the widht available.  if it's larger, it adjusts the ticks down 2. 
+		if (this.horizontal){return}
 		let ticksWidth = 0;
 		let largest = 0;
 		let count = 0;
@@ -787,17 +841,13 @@ class ChartBase extends EventEmitter {
 		}
 
 		if (ticksWidth > this.width){
-			if (this.horizontal){
-				this[`${this.xOrY}Axis`].ticks(3);				
-			}else{
-				this[`${this.xOrY}Axis`].ticks(2);				
-			}
+			this[`${this.xOrY}Axis`].ticks(2);				
 
 			if (this.tickAll){
 				this[`${this.xOrY}Axis`].tickValues(this.smallDateDomain);			
 			}
 			this.currentTicks = 2;			
-		}else{
+		}else{		
 			this[`${this.xOrY}Axis`].ticks(this[`${this.xOrY}ScaleTicks`])			
 			this.currentTicks = "all"
 		}
@@ -806,6 +856,8 @@ class ChartBase extends EventEmitter {
 	}
 	
 	topTick(tickLabels){
+		//currently i'm not including the trailing label in the axis function.  had alignment problems.  I ccan probably rethink all that and make it work.
+		//in the meantime, i'm basically cloning another tick into there.
 		let paddedLabel = tickLabels[1]
 		if (paddedLabel != "%" && paddedLabel != ""){paddedLabel = "\u00A0"+"\u00A0"+tickLabels[1]}
 		d3.selectAll(`#${this.targetDiv} .topTick`).remove();
@@ -823,6 +875,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	createSideLayoutAxis(){
+		//side by side axis need to actualyl clone out the axis and make a second one.
 		if (this.chartLayout =="sideBySide"){
 			this.axisIsCloned = true;
 			let $xaxis = this.$(`.${this.xOrY}.axis`)
@@ -844,15 +897,77 @@ class ChartBase extends EventEmitter {
 	}	
 		
 	renderAxis (){
+		this.emit("chart:renderingAxis", this)
 		
-		this.getXAxis();
-		this.getYAxis();
-		this.appendXAxis();
-		this.appendYAxis();		
-		this.adjustXTicks();
-		this.topTick(this.dataLabels);
-		this.createSideLayoutAxis();
+		if (this.includeXAxis){
+			this.getXAxis();			
+			this.appendXAxis();
+			this.adjustXTicks();
+			this.createSideLayoutAxis();
+		}
+		if (this.includeYAxis){
+			this.getYAxis();
+			this.appendYAxis();		
+			this.topTick(this.dataLabels);			
+		}
+		this.emit("chart:axisRendered", this)
+		
+	}
+	
 
+
+	//////////////////////////////////////////////////////////////////////////////////
+	///// LEGEND.
+	//////////////////////////////////////////////////////////////////////////////////  	
+
+	
+	renderLegend(){
+		this.emit("chart:renderingLegend", this)
+		
+		if(!this.hasLegend){
+			return;
+		}
+
+		this.renderLegendTemplate();
+		this.renderLegendClickEvent();
+		this.defineLegendSelections();
+		this.setLegendPositions();		
+		
+		this.emit("chart:legendRendered", this)
+
+	}
+	
+	renderLegendTemplate (){
+		//render the legend template
+		this.$legendEl.html(this.legendTemplate({data:this.chartData,self:this}));		
+	}
+	
+	renderLegendClickEvent(){
+		//define click events
+		this.$(".legendItems").on("click", (evt) =>{
+			let $el = $(evt.currentTarget);
+			let id = $el.attr("data-id")
+			//udpate what is included or not, not just for current data, but for the other multi datas (if any) and their blobs of data.
+			this.updateVisibility(this.data,id,$el)
+			
+			this.multiDataColumns.forEach( (dataType) => {
+				this.updateVisibility(this[dataType],id,$el)
+			})
+			
+			$el.toggleClass("clicked");									
+			this.chartData = this.makeChartData (this.data)				
+			this.update ();  		
+
+		})				
+	}
+	
+	defineLegendSelections(){
+		//define d3 seletions of legend bits to use later.
+		this.legendItems = d3.selectAll(`#${this.legendDiv} .legendItems`)
+			.data(this.chartData)
+		this.legendValues = d3.select(`#${this.legendDiv}`).selectAll(".valueTip")
+			.data(this.chartData);			
+		this.legendDate = d3.selectAll(`#${this.legendDiv} .dateTip`);				
 	}
 	
 	updateVisibility (data,id,$el){
@@ -862,53 +977,10 @@ class ChartBase extends EventEmitter {
 		}else{
 			currentData.visible = false
 		}
-		
-		
-	}
-
-	//////////////////////////////////////////////////////////////////////////////////
-	///// LEGEND.
-	//////////////////////////////////////////////////////////////////////////////////  	
-
-	
-	renderLegend(){
-		if(!this.hasLegend){
-			return;
-		}
-
-		this.$legendEl.html(this.legendTemplate({data:this.chartData,self:this}));
-		
-		this.$(".legendItems").on("click", (evt) =>{
-			let $el = $(evt.currentTarget);
-			let id = $el.attr("data-id")
-			
-			this.updateVisibility(this.data,id,$el)
-
-			this.multiDataColumns.forEach( (dataType) => {
-				this.updateVisibility(this[dataType],id,$el)
-			})
-			
-			$el.toggleClass("clicked");									
-			this.chartData = this.makeChartData (this.data)				
-			this.update ();  		
-
-		})
-
-		this.legendItems = d3.selectAll(`#${this.legendDiv} .legendItems`)
-			.data(this.chartData)
-
-
-		this.legendValues = d3.select(`#${this.legendDiv}`).selectAll(".valueTip")
-			.data(this.chartData);
-			
-		this.legendDate = d3.selectAll(`#${this.legendDiv} .dateTip`);
-		
-		this.setLegendPositions();		
-
 	}
 	
 	setLegendPositions(){
-
+		//want legend items on the right to sort based on what is included or not, so they all have a top style applied.
 		if (!this.hasLegend){
 			return;
 		}
@@ -942,23 +1014,24 @@ class ChartBase extends EventEmitter {
 		if (!this.multiDataColumns){
 			return;
 		}
+		//click event for nav buttons
 		this.$(".chart-nav .btn").on("click", (evt) => {
 
 				let $el = $(evt.currentTarget);
                 let thisID = $el.attr("dataid");
 
                 let i = this.$(".chart-nav .btn").index($el)
-
+				//set the ytick labels to the right index in array, or to the first one, if not defined for this position.
 				if (this.YTickLabel[i]){
 					this.dataLabels = this.YTickLabel[i];
 				}else{
 					this.dataLabels = this.YTickLabel[0];					
 				}
-				
+				//if a change in transform of data, need to update datatype.
 				if (this.multiTransforms){
 					this.dataType = thisID;
 				}
-
+				//swithc out data, make new chartdata and update
 				this.data = this[thisID]
 				this.chartData = this.makeChartData (this.data)
 
@@ -972,7 +1045,7 @@ class ChartBase extends EventEmitter {
     	if (!this.chartLayoutLabels){ 
 	    	return;
     	}
-    	
+    	//for chart layout button updates. find current chartlayout, last one by default.
     	this.chartLayout = this.chartLayoutLabels[this.chartLayoutLabels.length -1]
 
 		this.$(".layoutNavButtons").on("click", (evt) => {
@@ -981,7 +1054,7 @@ class ChartBase extends EventEmitter {
 			
 			let thisID = $el.attr("dataid");
 			$el.addClass("selected").siblings().removeClass("selected");
-			
+			//update the current chartlayout base don what clicked.
 		    this.chartLayout= thisID;
 			
 			let index = this.chartLayoutLabels.indexOf(thisID);
@@ -1008,8 +1081,10 @@ class ChartBase extends EventEmitter {
 	//////////////////////////////////////////////////////////////////////////////////  	
 
 	renderTooltips(){
+		this.emit("chart:renderingTooltip", this)
+		
         if (this.showTip == "off"){return}
-
+		//sets up mechanism to find where cursor is in SVG
 		this.baseElement = document.getElementById(this.targetDiv).querySelector('svg');
 		this.svgFind = this.baseElement;		
 		this.pt = this.svgFind.createSVGPoint();
@@ -1019,9 +1094,12 @@ class ChartBase extends EventEmitter {
 		this.addTooltip();
 		this.tooltipEvents();
 		
+		this.emit("chart:tooltipsRendered", this)
+		
 	}
 	
 	addCursorLine(){
+		//appends the line that moves across
 		this.cursorLine = this.svg.append('svg:line')
 			.attr('class','cursorline')
 			.attr("clip-path", `url(#clip${this.targetDiv})`)
@@ -1034,6 +1112,7 @@ class ChartBase extends EventEmitter {
 	
 	
 	addTooltip() {
+		//adds a tooltip div.  turns it off or on depending on options.
 		this.tooltip = d3.select(`#${this.chartDiv}`).append("div")
 			.attr("class", "reuters-tooltip")
             .styles({
@@ -1051,6 +1130,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	tooltipEvents(){
+		//mouse and touch events.
 		this.svgmove = this.svgFind.addEventListener('mousemove', (evt) => { return this.tooltipMover(evt); },false);
 		this.svgtouch = this.svgFind.addEventListener('touchmove',(evt) => { return this.tooltipMover(evt); },false);
 		this.svgout = this.svgFind.addEventListener('mouseout',(evt) => { return this.tooltipEnd(evt); },false);
@@ -1058,6 +1138,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	tooltipMover(evt){
+		//calculate location of mouse or finger.
 		this.loc = this.cursorPoint(evt);
 		this.xPointCursor = this.loc[this.xOrY];
 		this.yPointCursor = this.loc[this.yOrX];		
@@ -1065,7 +1146,9 @@ class ChartBase extends EventEmitter {
 		this.closestDate = null;
 		this.indexLocation = this.xPointCursor - parseFloat(this.margin[this.leftOrTop]);
 		
+		//positions are different if side by side.
 		this.calcSidebySideTipPositions();
+		//find the closest value to where you are positioned.  different for categories.
 		if (this.xValue == "category"){
 			this.findTipValueCat();
 		}else{
@@ -1083,7 +1166,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	tooltipEnd(){
-
+		//on exiting the hover, reset everything back to non-existant.
 		this.cursorLine
 			.attr(`${this.xOrY}1`, 0- this.margin[this.leftOrTop] -10 )
 			.attr(`${this.xOrY}2`, 0-this.margin[this.leftOrTop]-10);
@@ -1110,7 +1193,7 @@ class ChartBase extends EventEmitter {
 	}	
 	
 	cursorPoint (evt){
-
+		//calc out where you are.
 		if ((evt.clientX)&&(evt.clientY)) {
 			this.pt.x = evt.clientX; this.pt.y = evt.clientY;
 		} else if (evt.targetTouches) {
@@ -1127,6 +1210,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	calcSidebySideTipPositions (){
+		//if you are in a side by side layout, has to figure out what set of data to look through.
 		if (this.chartLayout == "sideBySide"){
 			let eachChartWidth = (this[this.widthOrHeight] / this.numberOfObjects());
 			for (i = 0; i < this.numberOfObjects();  i++ ){
@@ -1149,7 +1233,7 @@ class ChartBase extends EventEmitter {
 	}	
 	
 	findTipValueCat(){
-
+		//finds closes value on category chart
 		let closestRange = null;
 		let rangeArray = []
 		this.scales.x.domain().forEach( (d) => {
@@ -1165,7 +1249,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	findTipValue(){
-
+			//finds closest value on all other charts.  need to test this for not date.
 			this.locationDate = this.scales.x.invert(this.indexLocation);
 			this.chartData[0].values.forEach( (d,i) => {
 				let include = false;
@@ -1192,6 +1276,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	moveCursorLine() {
+		//actally move the line along.
 		let sideBySideMod = 0;
 		if (this.chartLayout == "sideBySide"){ 
 			sideBySideMod = this.widthOfBar() / 2
@@ -1202,7 +1287,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	makeTipData (){
-				
+		//tooltips and legends need to be passed only the data the matches your current location and is visible.		
 		let tipData = [];
 		this.chartData.forEach( (d) => {
 			let name = d.name;
@@ -1226,7 +1311,7 @@ class ChartBase extends EventEmitter {
 	}
 
 	updateTooltipContent(){
-		
+		//update the html of the tooltip, and also position it.  logic decides if it's left or right of line, above or below cursor point.
 		this.tooltip
 			.html( (d) => this.tipTemplate({this:this, data:this.makeTipData()}) )
 			.style(this.leftOrTop, (d) => {
@@ -1263,7 +1348,7 @@ class ChartBase extends EventEmitter {
 	}
 
 	updateLegendContent(){
-
+		//update the html of the legend. logic varies if it's date or category, or quarters
 		if (this.hasLegend){				
 			let legendData = this.makeTipData();			
 
@@ -1296,6 +1381,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	highlightCurrent (){
+		//for bars, classes all the other bars to be lighter so this one stands out.
 		if (this.chartType == "bar"){
 			this.barChart.selectAll(".bar")
 				.classed("lighter", (d) => {
@@ -1305,6 +1391,7 @@ class ChartBase extends EventEmitter {
 					return true;		
 				});			
 		}
+		//for lines, adds a circle in at current point.
 		if (this.chartType == "line" && this.chartLayout != "sideBySide"){
 			if (this.tipHighlight){
 				this.tipHighlight.remove();
@@ -1343,7 +1430,9 @@ class ChartBase extends EventEmitter {
 	
 	
 	renderEvents(){
+		this.emit("chart:renderingEvents", this)
 
+		//on scroll, can run animate.  on resize  checks to see if width changed.  if so checks the breakpoint, then updates.
 		$(window).scroll( () => {
             this.scrollAnimate();
         });
@@ -1357,12 +1446,14 @@ class ChartBase extends EventEmitter {
 			this.checkLegendBreakpoint();
 			this.update();
 		},100));
+		this.emit("chart:eventsRendered", this)
+		
 		
 		
 	}
 	
 	scrollAnimate(){
-
+		//this is off if is pymed.  otherwise, scrolly math and runs either in or out.
 		if(this.hasPym || !this.animateOnScroll){return;}
 		
 		let scrollTop = $(window).scrollTop();
@@ -1386,7 +1477,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	animateIn (){
-
+		//transitions the bars in.
 		if (this.barChart){
 			this.barChart.selectAll(".bar")
 				.transition()
@@ -1406,6 +1497,7 @@ class ChartBase extends EventEmitter {
 				})
 
 		}
+		//transitions the lines and areas in.
 		if (this.lineChart){
 			this.lineChart.selectAll("path.line")
 				.transition()
@@ -1436,7 +1528,7 @@ class ChartBase extends EventEmitter {
 	}
 
 	animateOut (){
-
+		//transition both back out.
 		if (this.barChart){
 			this.barChart.selectAll(".bar")
 				.transition()
@@ -1465,6 +1557,8 @@ class ChartBase extends EventEmitter {
 	
 	baseUpdate (duration){
 		//console.log("base updating")
+		this.emit("chart:updatingBase", this)
+
 		if (!duration){duration = 1000;}
 		this.setWidthAndMargins();
 		this.setLegendPositions();
@@ -1477,20 +1571,29 @@ class ChartBase extends EventEmitter {
 			x: this.getXScale(),
 			y: this.getYScale()
 		};
-		this.updateXScales();
-		this.updateYScales();
-		this.updateXAxis(duration);
-		this.updateYAxis(duration);
-		this.updateSideLayoutAxis();
+
+		if (this.includeXAxis){
+			this.updateXScales();
+			this.updateXAxis(duration);
+			this.updateSideLayoutAxis();
+		}
+		if (this.includeYAxis){		
+			this.updateYScales();
+			this.updateYAxis(duration);
+		}
+
 		if (this.zeroLine){
 			this.updateZeroLine(duration);
 		}
 		this.updateRecessions(duration);
-		this.labelUpdate()		
+		this.labelUpdate()
+
+		this.emit("chart:baseUpdated", this)
+				
 	}
 	
 	updateZeroLine (duration){
-		
+		//updates the zero line
 		this.zeroLine
 			.transition()
 			.duration(duration)		
@@ -1507,19 +1610,20 @@ class ChartBase extends EventEmitter {
 	}
 	
 	updateRecessions (duration){
+		//updates recessions
 		this.svg.selectAll(".recessionBox")
 			.transition()
 			.duration(duration)		
 			.attrs({
-				x:(d) => (this.scales.x(this.recessionDateParse(d.start))),
-				y:0,
-				width:(d) => (this.scales.x(this.recessionDateParse(d.end))) - (this.scales.x(this.recessionDateParse(d.start))),
-				height:this.height
-			});			
+				[this.xOrY]:(d) => (this.scales.x(this.recessionDateParse(d.start))),
+				[this.yOrX]:0,
+				[this.widthOrHeight]:(d) => (this.scales.x(this.recessionDateParse(d.end))) - (this.scales.x(this.recessionDateParse(d.start))),
+				[this.heightOrWidth]:this[this.heightOrWidth]
+			});	
 	}
 	
 	setWidthAndMargins(){
-
+		//maths to determine essentially how wide to make left margin.
 		//length of largest tick
 		let maxWidth = -1;
 		$(`#${this.targetDiv} .y.axis`).find("text").not(".topTick").each(function(){
@@ -1558,6 +1662,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	updateCursorLine(){
+		//make sure cursor line is full height and off screen on resize
 		this.svg.selectAll('.cursorline')
 			.attrs({
 			[`${this.yOrX}1`]:0,
@@ -1567,7 +1672,7 @@ class ChartBase extends EventEmitter {
 	
 	udpateSVG(duration){
 
-
+		//update the base svg and g tag
 		this.baseSVG
 			.transition("baseTransform")
 			.duration(duration)
@@ -1583,6 +1688,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	updatePlot(duration){
+		//update the plot rectangle
 		this.svg
 			.transition()
 			.duration(duration)		
@@ -1594,6 +1700,7 @@ class ChartBase extends EventEmitter {
 	}
 
 	updateClip(duration){
+		//update clipping path.
 		 this.clip
 			.transition()
 			.duration(duration)		 
@@ -1607,17 +1714,20 @@ class ChartBase extends EventEmitter {
 	}
 	
 	updateXScales(){
+		//update the scale in the axis (since width has maybe changed, or data has maybe changed) or number of ticks has maybe changed.
 		this.xAxis.scale(this.scales[this.xOrY]);
 		this.xAxis.ticks(this[`${this.xOrY}ScaleTicks`]);		
 	}	
 	
 	updateYScales(){
+		//update y axis scales, same reason.
 		this.yAxis.scale(this.scales[this.yOrX]);
 		this[`${this.yOrX}Axis`].tickSize(0-this[this.widthOrHeight]);
 		this.yAxis.ticks(this[`${this.yOrX}ScaleTicks`]);
 	}
 	
 	updateXAxis(duration){
+		//recall the x axis.  feel like i should not have to repeat the custom axis, but something was wonky thee and needed to.
 		if (this.updateCount > 0 || this.firstRun){
 			this.adjustXTicks()
 		}
@@ -1650,7 +1760,7 @@ class ChartBase extends EventEmitter {
 	}	
 	
 	updateYAxis(duration){
-
+		//recall the y axis. ditto repeating custom axis.  man, that bothers me.
 		this.customYAxis = (g) =>{
 			let s = g.selection ? g.selection() : g;
 			g.call(this.yAxis)
@@ -1681,7 +1791,7 @@ class ChartBase extends EventEmitter {
         	})
 	    	.call(this.customYAxis)
 			.on("end", (d) => {
-
+				//ok, this is bizarre.  but basically i need to run the update twice, right?  to readjust for the left margin.  but i don't want the second to run and cancel out all of the transitions.  In newer d3, i can probbaly get around this by naming all the transitions, but not there yes.  so basically this waits for the transition of this axis to end, and then re-runs the update.  some logic w/ update count and first run keeps this from happening over and over forever.
 				this.topTick(this.dataLabels)						
 				if (this.firstRun){
 					this.firstRun = false;					
@@ -1707,6 +1817,7 @@ class ChartBase extends EventEmitter {
 	}	
 
 	updateSideLayoutAxis(){
+		//if it's side by side, need to filter out other axis if it's no longer needed, otherwise need to update it.
 		if (this.chartLayout =="sideBySide"){
 			if (!this.axisIsCloned){
 				this.createSideLayoutAxis();
@@ -1747,7 +1858,7 @@ class ChartBase extends EventEmitter {
 			
 			
 	}
-		
+	//Locales!!	
 	locales(lang) {
 		let locales = {
 			en:{
@@ -1870,130 +1981,12 @@ class ChartBase extends EventEmitter {
 		return locales[lang]	
 	}
 
-	locales(lang) {
-		let locales = {
-			en:{
-				decimal:".",
-				thousands:",",
-				grouping:[3],
-				currency:["$",""],				
-			  "dateTime": "%x, %X",
-			  "date": "%-m/%-d/%Y",
-			  "time": "%-I:%M:%S %p",
-			  "periods": ["AM", "PM"],
-			  "days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-			  "shortDays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-			  "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-			  "shortMonths": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-			},
-			
-			es:{
-				"decimal": ",",
-				"thousands": ".",
-				"grouping": [3],
-				"currency": ["$", ""],				
-			  "dateTime": "%x, %X",
-			  "date": "%d/%m/%Y",
-			  "time": "%-I:%M:%S %p",
-			  "periods": ["AM", "PM"],
-			  "days": ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"],
-			  "shortDays": ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"],
-			  "months": ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
-			  "shortMonths": ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
-			},
-			
-			fr:{
-				"decimal": ",",
-				"thousands": ".",
-				"grouping": [3],
-				"currency": ["$", ""],				
-			  "dateTime": "%A, le %e %B %Y, %X",
-			  "date": "%d/%m/%Y",
-			  "time": "%H:%M:%S",
-			  "periods": ["AM", "PM"],
-			  "days": ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"],
-			  "shortDays": ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."],
-			  "months": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"],
-			  "shortMonths": ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."]
-			},
-		
-			ch:{
-				decimal:".",
-				thousands:",",
-				grouping:[3],
-				currency:["¥",""],				
-				dateTime:"%a %b %e %X %Y",
-				date:"%d/%m/%Y",
-				time:"%H:%M:%S",
-				periods:["AM","PM"],
-				days:["周日","周一","周二","周三","周四","周五","周六"],
-				shortDays:["周日","周一","周二","周三","周四","周五","周六"],
-				months:["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],
-				"shortMonths":["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"]
-			},	
-		
-			pt:{
-				"decimal": ",",
-				"thousands": ".",
-				"grouping": [3],
-				"currency": ["$", ""],				
-				"dateTime": "%a %b %e %X %Y",
-				"date": "%m/%d/%Y",
-				"time": "%H:%M:%S",
-				"periods": ["AM", "PM"],
-				"days": ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes","Sábado"],
-				"shortDays": ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
-				"months": ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
-				"shortMonths": ["Jan", "Fev", "Mar", "Abr", "Maio", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
-			},
-			ar:{
-		        decimal:".",
-		        thousands:",",
-		        grouping:[3],
-		        currency:["$",""],				
-		        dateTime:"%a %b %e %X %Y",
-		        date:"%m/%d/%Y",
-		        time:"%H:%M:%S",
-		        periods:["صباحا","مسا؛ا"],
-		        days:[" الأحد"," الإثنين "," الثلاثاء "," الأربعاء "," الخميس "," الجمعة "," السبت "],
-		        shortDays:[" أحد "," إثنين "," ثلاثاء "," أربعاء ","لخميس"," الجمعة "," سبت "],
-		        months:[" يناير"," فبراير "," مارس "," أبريل ","مايو"," يونيو "," يوليو "," أغسطس "," سبتمبر "," اكتوبر "," نوفمبر "," ديسمبر "],
-		        "shortMonths":[" يناير"," فبراير "," مارس "," أبريل ","مايو"," يونيو "," يوليو "," أغسطس "," سبتمبر "," اكتوبر "," نوفمبر "," ديسمبر "],
-			},
-			ja:{
-		        decimal:".",	
-		        thousands:",",	
-		        grouping:[3],	
-		        currency:["¥",""],				
-		        dateTime:"%a %b %e %X %Y",	
-		        date:"%Y/%m/%d",	
-		        time:"%H:%M:%S",	
-		        periods:["午前","午後"],	
-		        days:["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"],	
-		        shortDays:["（日）","（月）","（火）","（水）","（木）","（金）","（土曜）"],	
-		        months:["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],	
-		        "shortMonths":["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"]	
-			},
-			bg:{
-				decimal:".",
-				thousands:" ",
-				grouping:[3],
-				currency:["$",""],				
-				dateTime:"%a %b %e %X %Y",
-				date:"%m/%d/%Y",
-				time:"%H:%M:%S",
-				periods:["AM","PM"],
-				days:["неделя","понеделник","вторник","сряда","четвъртък","петък","събота"],
-				shortDays:["нед.","пон.","вт.","ср.","чет.","пет.","съб."],
-				months:["януари","февруари","март","април","май","юни","юли","август","септември","октомври","ноември","декември"],
-				"shortMonths":["ян.","фев.","март","апр.","май","юни","юли","авг.","септ.","окт.","нов.","дек."]
-			}
-		}		
-		return locales[lang]	
-	}
 
 	
 	labelAdder(){
+		this.emit("chart:addingAnnotations", this)
+
+		//lets add in some annotations.
 		this.annotationData = this.annotations()
 
 		this.makeAnnotations = d3.annotation()
@@ -2038,10 +2031,12 @@ class ChartBase extends EventEmitter {
 		  .call(this.makeAnnotations)	
 		  
 		 this.svg.select(".annotation-group").classed("active",true)	
+		
+		this.emit("chart:AnnotationsAdded", this)		 
 	}
 
 	labelUpdate ()  {
-
+		//and update those same.
 		if (!this.annotationGroup){return;}
 		this.annotationData = this.options.annotations()
 

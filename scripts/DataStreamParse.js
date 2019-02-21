@@ -18,7 +18,7 @@ class DataStreamParse extends EventEmitter {
 		_.each(opts, (item, key) => {
 			this[key] = item;
 		});
-		
+		//bring in all the options, run parse data.
 		return this.parseData(this.data);				
 		
 		
@@ -29,7 +29,7 @@ class DataStreamParse extends EventEmitter {
 		data = JSON.parse(JSON.stringify(data));
 		this.rawData = data;
 		this.emit("data:parsing", this)
-
+		//determine if is a single repsonse, or a bundle.  And run the format data for each.
 		if (this.rawData.DataResponses){
 			this.formattedData = {}
 			this.rawData.DataResponses.forEach( (response, index) => {
@@ -42,7 +42,7 @@ class DataStreamParse extends EventEmitter {
 		}
 		
 		this.emit("data:parsed", this)		
-		
+		//return either all of the data, or if there is a dataSeries user wants, just that dataSeries.
 		if (this.dataSeries || this.dataSeries === 0){
 			return this.formattedData[`series${this.dataSeries}`]
 		}

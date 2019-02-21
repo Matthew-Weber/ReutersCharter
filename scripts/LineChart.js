@@ -10,14 +10,17 @@ class LineChart extends ChartBase {
 	}
 
 	xScaleMin (){
+		//get the min
 		return d3.min(this.chartData, (c) =>  (d3.min(c.values, (v) => v[this.xValue])) );
 	}
 	
 	xScaleMax (){
+		//get the max
 		return d3.max(this.chartData, (c) => ( d3.max( c.values, (v) => v[this.xValue] ) ) );
 	}
 	
 	xScaleRange (){
+		//range is 0 and width, unless side by side, then is crazy pants.
 		let range = [0, this[this.widthOrHeight]]
 		if (this.chartLayout == "sideBySide"){
 			range = [0, (this[this.widthOrHeight]/(this.chartData.length * (1 + (2 / (this.chartData[0].values.length) ) ) ) )];
@@ -26,6 +29,10 @@ class LineChart extends ChartBase {
 	}
 
 	xScaleDomain (){
+		//domain is probably just min and max, but if it's a category chart, than it's a map of all the categories. if x scale vals, then it's first and last.
+		if (this.xScaleVals){
+			return [this.xScaleVals[0],this.xScaleVals[this.xScaleVals.length - 1]]
+		}
 		let domain = [this.xScaleMin(),this.xScaleMax()];
 		if (this.xScaleType == "Point" || this.xScaleType == "Band"){
 			domain = this.chartData[0].values.map( (d) => d.category)
@@ -33,14 +40,15 @@ class LineChart extends ChartBase {
 		return domain;
 	}
 		
-	getXScale () {
+	getXScale () {	
+		//create the scales, 
 		return d3[`scale${this.xScaleType}`]()
 			.domain(this.xScaleDomain())
-			.range(this.xScaleRange());
-
+			.range(this.xScaleRange())
 	}
 	
 	yScaleMin (){
+		// y min needs to determine what layout you are using, for will be different in different circumstances.
 		let theValues = this.dataType;
 		if (this.chartLayout == "stackTotal"){theValues = "stackTotal";}
 		let min = d3.min(this.chartData, (c) => (d3.min(c.values, (v) => v[theValues] ) ) );
@@ -50,6 +58,7 @@ class LineChart extends ChartBase {
 	}
 	
 	yScaleMax (){
+		//same for max.
 		let theValues = this.dataType;
 		if (this.chartLayout == "stackTotal"){theValues = "stackTotal";}
 		let max = d3.max(this.chartData, (c) => (d3.max(c.values, (v) => v[theValues] ) ) );
@@ -58,6 +67,7 @@ class LineChart extends ChartBase {
 	}
 	
 	yScaleRange (){
+		//horizontal on y is inverted.
 		let fullHeight = this[this.heightOrWidth];
 		let rangeLow = fullHeight;
 		let rangeHigh = 0;
@@ -69,6 +79,7 @@ class LineChart extends ChartBase {
 	}
 	
 	yScaleDomain (){
+		//again, can maybe be category, otherwise is min/max.
 		let domain = [this.yScaleMin(),this.yScaleMax()];
 		if (this.yScaleType == "Point" || this.yScaleType == "Band"){
 			domain = this.chartData[0].values.map( (d) => d.category)
@@ -77,6 +88,7 @@ class LineChart extends ChartBase {
 	}
 			
 	getYScale () {
+		//explicit y scale values demand a specific domain.  not sure why bifurcated here and not in ydomain, but i think it has something to do w/ .nice going crazy on explicit scales.  gotta check that.
 		if (!this.yScaleVals || this.hasZoom){			
 			return d3[`scale${this.yScaleType}`]()
 				.domain(this.yScaleDomain())
@@ -90,6 +102,7 @@ class LineChart extends ChartBase {
 	}
 	
 	render (){
+		this.emit("chart:rendering", this)		
 		this.setLineGenerator();
 		this.setAreaGenerator();
 		this.appendLineGs();
@@ -99,12 +112,11 @@ class LineChart extends ChartBase {
 		this.appendAreaPaths();
 		this.appendPointCircles();
 		this.makeZeroLine();
-		
-		console.log('rendering')
-
+		this.emit("chart:rendered", this)		
 	}
 
 	setLineGenerator(){
+		//define the line generator, account for stackTotal and percent. defined will not return a line segment on nans. 
 		this.line = d3.line()
 	    	[this.xOrY]( (d) => this.scales.x(d[this.xValue]) )
 		    [this.yOrX]( (d) => {
@@ -122,7 +134,7 @@ class LineChart extends ChartBase {
 	}
 	
 	setAreaGenerator(){
-		let lineType = this.lineType;		
+		//samsies.
 		this.area = d3.area()
 	    	[this.xOrY]( (d) => this.scales.x(d[this.xValue]) )
 		    [`${this.yOrX}0`]( (d) => { 
@@ -154,6 +166,7 @@ class LineChart extends ChartBase {
 	}
 	
 	appendLineGs(){
+		//add the gtags that will hold the lines.
 		this.lineChart = this.svg.selectAll(".lineChart")
 			.data(this.chartData, (d) => d.name )
 			.enter().append("g")
@@ -166,6 +179,7 @@ class LineChart extends ChartBase {
 	}
 
 	lineGMouseover (){
+		//define mouseover event.  basically, sorts to bring current line to top, and fades back the others.
 		this.lineChart.on("mouseover", (d,i,nodes) => {			
 			//put the line we've hovered on on top=
 			this.lineChart.sort( (a,b) => {
@@ -183,6 +197,7 @@ class LineChart extends ChartBase {
 	}
 	
 	lineGSideBySide	(){	
+		//if is side by side, have to move over each line.
 		if (this.chartLayout == "sideBySide"){
 			this.lineChart.attr("transform", (d,i) =>{
 				if (!this.horizontal){
@@ -197,6 +212,7 @@ class LineChart extends ChartBase {
 	}
 	
 	appendLinePaths(){
+		//add them paths in.  tween function draws them on.
 		this.lineChart.append("path")
 			.attrs({
 				"class":"line",
@@ -217,6 +233,7 @@ class LineChart extends ChartBase {
 	}
 	
 	appendAreaPaths(){
+		//add the areas in.
 		this.lineChart.append("path")
 			.attrs({
 				"class":(d) => {
@@ -248,6 +265,7 @@ class LineChart extends ChartBase {
 	}
 	
 	appendPointCircles(){
+		//if markdata points, putin the circles.
 		if (!this.markDataPoints){return}
 		this.lineChart.selectAll(".tipCircle")
 			.data( (d) => d.values)
@@ -296,7 +314,7 @@ class LineChart extends ChartBase {
 	
 	update(){
 		this.baseUpdate();
-		console.log('updating')
+		this.emit("chart:updating", this)		
 		this.updateLineGs();
 		this.exitLinesGenerator();
 		this.exitAreaGenerator();
@@ -308,11 +326,13 @@ class LineChart extends ChartBase {
 		this.updateCircles();
 		this.updateExitCirclePoints();
 		this.updateEnterCirclePoints();
+		this.emit("chart:updated", this)					
 		
 	}
 
 
 	updateLineGs(){
+		//again, for sideby side, have to move all those g tags around.
 		this.lineChart
 			.transition()	        
 			.duration(1000)
@@ -330,6 +350,7 @@ class LineChart extends ChartBase {
 	}
 	
 	exitLinesGenerator(){
+		//there is probably a btter way to do this, for now making a seperate line generator for zeroing out.
 		this.exitLine = d3.line()
 	    	[this.xOrY]( (d) => this.scales.x(d[this.xValue]) )
 			[this.yOrX]( (d) => (this.margin[this.bottomOrRight]+this[this.heightOrWidth]+this.margin[this.topOrLeft]+10) )
@@ -338,14 +359,15 @@ class LineChart extends ChartBase {
 	}
 
 	exitAreaGenerator(){
+		//there is probably a btter way to do this, for now making a seperate line generator for zeroing out.
 		this.exitArea = d3.area()
 	    	[this.xOrY]( (d) => this.scales.x(d[this.xValue]) )
 			[this.yOrX+"0"]( (d) => (this.margin[this.bottomOrRight]+this[this.heightOrWidth]+this.margin[this.topOrLeft]+10) )
 			[this.yOrX+"1"]( (d) => (this.margin[this.bottomOrRight]+this[this.heightOrWidth]+this.margin[this.topOrLeft]+10) )
 			.curve( d3[`curve${this.lineType}`] )
 	}
-
-	updateExitingLines(){
+	//rest of these functions are pretty well named, so no more comments from me.
+	updateExitingLines(){	
 		this.lineChart
 			.data(this.chartData, (d) => d.name )
 	        .exit()

@@ -14,14 +14,17 @@ class BarChart extends ChartBase {
 	//////////////////////////////////////////////////////////////////////////////////  	
 
 	xScaleMin (){
+		//get x min
 		return d3.min(this.chartData, (c) =>  (d3.min(c.values, (v) => v[this.xValue])) );
 	}
 	
 	xScaleMax (){
+		//get x max
 		return d3.max(this.chartData, (c) => ( d3.max( c.values, (v) => v[this.xValue] ) ) );
 	}
 	
 	xScaleRange (){
+		//figure range for chart, will vary if is stacked bars.
 		let objectNumber = this.numberOfObjects();
 		if (this.chartLayout == "stackPercent" ||  this.chartLayout == "stackTotal"){objectNumber = 1;}
 		let range = [(this.widthOfBar() * objectNumber) / 2, this[this.widthOrHeight] - this.widthOfBar() * objectNumber];
@@ -32,6 +35,10 @@ class BarChart extends ChartBase {
 	}
 
 	xScaleDomain (){
+		//domain is probably just min and max, but if it's a category chart, than it's a map of all the categories. if x scale vals, then it's first and last.
+		if (this.xScaleVals){
+			return [this.xScaleVals[0],this.xScaleVals[this.xScaleVals.length - 1]]
+		}
 		let domain = [this.xScaleMin(),this.xScaleMax()];
 		if (this.xScaleType == "Point" || this.xScaleType == "Band"){
 			domain = this.chartData[0].values.map( (d) => d.category)
@@ -39,13 +46,15 @@ class BarChart extends ChartBase {
 		return domain;
 	}
 		
-	getXScale () {
+	getXScale () {	
+		//create the scales, 
 		return d3[`scale${this.xScaleType}`]()
 			.domain(this.xScaleDomain())
 			.range(this.xScaleRange())
 	}
 	
 	yScaleMin (){
+		//find y min.  Is different if stacked.  also, if greater than 0, return 0.
 		let theValues = this.dataType;
 		if (this.chartLayout == "stackTotal"){theValues = "stackMin";}
 		let min = d3.min(this.chartData, (c) => (d3.min(c.values, (v) => v[theValues] ) ) );
@@ -55,6 +64,7 @@ class BarChart extends ChartBase {
 	}
 	
 	yScaleMax (){
+		//find max, account for stacks.
 		let theValues = this.dataType;
 		if (this.chartLayout == "stackTotal"){theValues = "stackTotal";}
 		let max = d3.max(this.chartData, (c) => (d3.max(c.values, (v) => v[theValues] ) ) );
@@ -64,6 +74,7 @@ class BarChart extends ChartBase {
 	}
 	
 	yScaleRange (){
+		//return the range, horizontal is inverted.
 		let fullHeight = this[this.heightOrWidth];
 		let rangeLow = fullHeight;
 		let rangeHigh = 0;
@@ -75,6 +86,7 @@ class BarChart extends ChartBase {
 	}
 	
 	yScaleDomain (){
+		//determine the domain.
 		let domain = [this.yScaleMin(),this.yScaleMax()];
 		if (this.yScaleType == "Point" || this.yScaleType == "Band"){
 			domain = this.chartData[0].values.map( (d) => d.category)
@@ -83,6 +95,7 @@ class BarChart extends ChartBase {
 	}
 			
 	getYScale () {
+		//return the scales
 		if (!this.yScaleVals || this.hasZoom){			
 			return d3[`scale${this.yScaleType}`]()
 				.domain(this.yScaleDomain())
@@ -101,6 +114,8 @@ class BarChart extends ChartBase {
 
 	
 	xBarPosition (d, i, j) {
+		//because bars in d3 are wonky, i adjust the x position based on how many columns of data we are plotting, and the layout of the chart.
+		//j in this function is the index of the parent group.  It no longer is passed in natively in d3, so i'm saving it onto the parent as a data attribute and accessing that.
 		let barPosition = this.scales.x(d[this.xValue]);
 		let positionInsideGroup = barPosition - ( j * this.widthOfBar() )			
 		let halfOfGroupWidth = (this.numberOfObjects() / 2) * this.widthOfBar()
@@ -118,7 +133,8 @@ class BarChart extends ChartBase {
 	
 	}
 	
-	yBarPosition (d) {
+	yBarPosition (d,textPosition) {
+		//y position needs to account for whether it's a stack or not, and whther it's horizontal or not.  piggybacking on this function for labels on bars, however, they need a small adjustment on horizontal.
 		if ( isNaN(d[this.dataType])){
 			return 0;				
 		}
@@ -134,11 +150,15 @@ class BarChart extends ChartBase {
 		let minOrMax = "max";
 		if (this.horizontal){
 			minOrMax = "min";
+			if (textPosition){
+				minOrMax = "max"
+			}
 		}
 		return this.scales.y(Math[minOrMax](0, d[this.dataType])); 
 	}
 	
 	barHeight (d){
+		//how big is your bar, usual caveats on stacks, et cetera.
 		if ( isNaN(d[this.dataType])){
 			return 0;				
 		}
@@ -152,7 +172,7 @@ class BarChart extends ChartBase {
 	}
 	
 	barFill (d,i,j){
-
+		//see prior note, re: j. color up down just returns the first and second items of the color range. outline bar will put none on the second item. hash after checks the date, and applies textures if past a certain point.
 		let color = this.colorScale(d.name)
 		if (this.colorUpDown){
 			if (d[this.dataType] > 0){
@@ -180,12 +200,10 @@ class BarChart extends ChartBase {
 	}
 	
 	barWidth (d,i,j){
-
+		//width of the bar.  tier doesn't currently exist. mostly we are just returning widthOfBar, but exceptions made for ontopOf
+		//a number of the calculations in here, and above should really just bein the widthOfBar function.  Note to self, MATT.
 		if (this.chartLayout == "tier"){
 			return this.widthOfBar() * this.numberOfObjects();
-		}
-		if (this.chartLayout == "outlineBar"){
-			return this.widthOfBar() 
 		}
 
 		if (this.chartLayout == "onTopOf" ){
@@ -202,6 +220,7 @@ class BarChart extends ChartBase {
 
 
 	render (){
+		this.emit("chart:rendering", this)		
 		this.appendBarGs();
 		this.lineGSideBySide();
 		this.appendBars();
@@ -210,13 +229,16 @@ class BarChart extends ChartBase {
 		if (this.isPoll){
 			this.addMoe();	
 		}
+		if (this.markDataPoints){
+			this.addBarLabels();
+		}
 				
-		console.log('rendering')
-
+		this.emit("chart:rendered", this)		
 	}
 
 	
 	appendBarGs(){
+		//a g for each column of data.  data-index will return index of these parent elements to be used in subsequent calculations.
 		this.barChart = this.svg.selectAll(".barChart")
 			.data(this.chartData, (d) => d.name )
 			.enter().append("g")
@@ -230,6 +252,7 @@ class BarChart extends ChartBase {
 	}
 	
 	lineGSideBySide	(){	
+		//side by side layout require translation.
 		if (this.chartLayout == "sideBySide"){
 			this.barChart.attr("transform", (d,i) =>{
 				if (!this.horizontal){
@@ -244,7 +267,7 @@ class BarChart extends ChartBase {
 	}
 	
 	appendBars(){
-		
+		//let's drop in some bars.
 		this.barChart.selectAll(".bar")
 			.data( (d) => d.values)
 			.enter().append("rect")
@@ -282,14 +305,37 @@ class BarChart extends ChartBase {
 		
 	}
 
+	addBarLabels(){
+		//if mark data points, i'll put in som elabels on each bar.  SHould maybe an option for white on bar, or black off bar? MATT
+		this.barChart.selectAll(".barLabel")
+			.data( (d) => d.values)
+			.enter().append("text")
+			.attrs({
+				"class":"barLabel",
+				[this.yOrX]: (d) => { 
+					let mod = 15;
+					if (this.horizontal){mod = -15}
+					return this.yBarPosition(d, true) + mod
+				}, 
+				[this.xOrY]:(d,i,nodes) => {
+					let j = +nodes[i].parentNode.getAttribute("data-index");
+					return this.xBarPosition(d,i,j) + this.widthOfBar()/2
+				},
+				"dy":(d) =>{
+					if (this.horizontal){return 3}
+				}
+			})
+			.text((d)=>d.value)
+		
+	}
 
 	//////////////////////////////////////////////////////////////////////////////////
 	///// UDPATE.
 	//////////////////////////////////////////////////////////////////////////////////  	
 	
-	update(){
+	update(){		
 		this.baseUpdate();
-		console.log('updating')
+		this.emit("chart:updating", this)		
 		
 		this.updateBarGs();
 		this.updateBars();
@@ -298,12 +344,18 @@ class BarChart extends ChartBase {
 		if (this.isPoll){
 			this.updateMoe();	
 		}
+		if (this.markDataPoints){
+			this.updateBarLabels();
+			this.updateBarLabelsExit();
+		}	
+		this.emit("chart:updated", this)					
 		
 	}
 
 
 	
 	updateBars(){
+		//updates the bars themselves.
 		this.svg.selectAll(".barChart")					
 			.data(this.chartData, (d) => d.name )
 			.selectAll(".bar")
@@ -331,6 +383,7 @@ class BarChart extends ChartBase {
 	}
 	
 	updateBarsExit(){
+		//removes the exiting bars.
 		this.barChart
 			.data(this.chartData, (d) => d.name )
 			.exit()
@@ -344,6 +397,7 @@ class BarChart extends ChartBase {
 
 
 	updateBarGs(){
+		//update the master g tags, transforms them if side by side.
 		this.barChart
 			.data(this.chartData, (d) => d.name )
 			.order()
@@ -363,21 +417,57 @@ class BarChart extends ChartBase {
 			
 	}
 	
+	updateBarLabels(){
+		//if we have labels, have to update them too.
+		this.barChart.selectAll(".barLabel")
+			.data( (d) => d.values)
+			.text((d)=>d.value)
+			.transition()
+			.duration(1000)
+			.attrs({
+				[this.yOrX]: (d) => { 
+					let mod = 15;
+					if (this.horizontal){mod = -15}
+					return this.yBarPosition(d, true) + mod
+				}, 
+				[this.xOrY]:(d,i,nodes) => {
+					let j = +nodes[i].parentNode.getAttribute("data-index");
+					return this.xBarPosition(d,i,j) + this.widthOfBar()/2
+				},
+				"dy":(d) =>{
+					if (this.horizontal){return 3}
+				}
+			})
+	}	
+	updateBarLabelsExit(){
+		//and exiting labels.
+		this.barChart
+			.data(this.chartData, (d) => d.name )
+			.exit()
+			.selectAll(".barLabel")
+			.transition()
+			.attr(this.heightOrWidth, 0)
+			.attr(this.yOrX, -2000);	
+						
+	}	
+	
 	//////////////////////////////////////////////////////////////////////////////////
 	///// POLLING CHART.
 	//////////////////////////////////////////////////////////////////////////////////  	
 
 	addMoe () {
-		
+		this.emit("chart:addingMoe", this)		
 		this.addMoeGs();
 		this.addMoeBars();
 		if (this.leftBarCol){
 			this.addMoeLabels();
 		}
+		this.emit("chart:moeAdded", this)				
 		
 	}	
 	
 	addMoeGs(){
+		//add margin of error g tags.
 		this.moeChart = this.svg.selectAll(".moeChart")
 			.data(this.chartData, (d) => d.name)
 			.enter().append("g")
@@ -389,6 +479,7 @@ class BarChart extends ChartBase {
 	}
 	
 	addMoeBars(){
+		//add margin of error bars, maths here a little different on Y and height.
 		this.addMoe = this.moeChart.selectAll(".moebar")
 			.data( (d) => d.values )
 			.enter().append("rect")
@@ -426,6 +517,7 @@ class BarChart extends ChartBase {
 	}
 	
 	moeFill(d){
+		//the fill for the moe uses textures, a touch different
 		let color = this.colorScale(d.name)
         let strokecolor = d3.rgb(color).darker(0.8);
 		this.t = textures.lines().size(7).orientation("2/8").stroke(strokecolor);
@@ -443,7 +535,7 @@ class BarChart extends ChartBase {
 	}
 	
 	addMoeLabels(){
-		console.log(this.moeLabelObj)
+		//add labels in, if it's a horizontal, two number poll question.
 		this.addMoeLabels = this.svg.selectAll("moeLabels")
 			.data([this.moeLabelObj[this.leftBarCol], this.moeLabelObj[this.rightBarCol]])
 			.enter()
@@ -468,6 +560,7 @@ class BarChart extends ChartBase {
 	}
 
 	updateMoe (){
+		this.emit("chart:updatingMoe", this)						
 		this.moeChart
 			.data(this.chartData, (d) => d.name )
 			.attr("data-index", (d,i) => i)			
@@ -478,9 +571,11 @@ class BarChart extends ChartBase {
 		if (this.leftBarCol){
 			this.updateMoeLabels();
 		}
+		this.emit("chart:moeUpdated", this)				
 	}
 	
 	updateMoeG(){
+		//update the exiting moe
 		this.moeChart
 			.data(this.chartData, (d) => d.name )
 			.exit()
@@ -491,6 +586,7 @@ class BarChart extends ChartBase {
 	}
 	
 	updateMoeBars(){
+		//update the bars
 	    this.addMoe
 			.data( (d) => d.values )	    
 	    	.transition()
@@ -524,6 +620,7 @@ class BarChart extends ChartBase {
 	}
 	
 	updateMoeLabels(){
+		//update the labels.
 		this.addMoeLabels
 	    	.transition()
 	    	.duration(1000)		

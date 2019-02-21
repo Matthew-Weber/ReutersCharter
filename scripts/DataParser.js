@@ -20,6 +20,7 @@ class DataParser extends EventEmitter {
 			groupSort:"ascending",
 			dataType:"value"											
 		}
+		//apply defaults
 		_.each(this.defaults, (item, key) => {
 			this[key] = item;
 		});
@@ -30,6 +31,7 @@ class DataParser extends EventEmitter {
 			this[key] = item;
 		});
 		
+		//if this is not creating the initial data, and is only resorting the data because elements have been removed, then just run the resort
 		if (this.resorting){
 			return this.reSort(this.data);
 		}
@@ -49,7 +51,7 @@ class DataParser extends EventEmitter {
 				point.date = this.dateParse(point.date);
 				point.displayDate = this.dateFormat(point.date);
 			}
-
+			//will parse all the numbers into numbers
 			_.each(point, (value,key) => {
 				if ( !isNaN( parseFloat(value) )  && key != "rawDate" && key != "date" && key != "displayDate"){
 					point[key] = parseFloat(value);

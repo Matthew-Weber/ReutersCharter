@@ -430,3 +430,9 @@ rect.bar.lighter{
 .bar.outline{
 	stroke:black;
 }
+.barLabel{
+	fill:white;
+	font-size:$font-size-xs;
+	text-anchor:middle;
+	font-weight: 700;
+}
