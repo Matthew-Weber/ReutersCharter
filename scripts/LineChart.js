@@ -172,6 +172,7 @@ class LineChart extends ChartBase {
 			.enter().append("g")
 			.attrs({
 				"clip-path":`url(#clip${this.targetDiv})`,
+				"data-index": (d,i) =>{return i},				
 				class: "lineChart",
 				id:(d) => {return `${this.targetDiv}${d.displayName.replace(/\s/g, '')}-line`; }
 			})
@@ -334,6 +335,7 @@ class LineChart extends ChartBase {
 	updateLineGs(){
 		//again, for sideby side, have to move all those g tags around.
 		this.lineChart
+			.attr("data-index", (d,i) => i)		
 			.transition()	        
 			.duration(1000)
 			.attr("transform", (d,i) => {

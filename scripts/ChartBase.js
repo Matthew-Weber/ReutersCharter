@@ -1422,7 +1422,7 @@ class ChartBase extends EventEmitter {
 				});			
 		}
 		//for lines, adds a circle in at current point.
-		if (this.chartType == "line" && this.chartLayout != "sideBySide"){
+		if (this.chartType == "line" ){
 			if (this.tipHighlight){
 				this.tipHighlight.remove();
 			}
@@ -1446,7 +1446,9 @@ class ChartBase extends EventEmitter {
 	
 				    return this.scales.y(d[this.dataType]);
 				})
-				.attr("r", (d,i) => {
+				.attr("r", (d,i,nodes) => {
+					let j = +nodes[i].parentNode.getAttribute("data-index");
+					if (j != i){ return 0}
 					if ( isNaN(d[this.dataType])){return 0;} 
 					 return 5;
 				})
@@ -1586,7 +1588,7 @@ class ChartBase extends EventEmitter {
 
 	
 	baseUpdate (duration){
-		//console.log("base updating")
+
 		this.emit("chart:updatingBase", this)
 
 		if (!duration){duration = 1000;}
