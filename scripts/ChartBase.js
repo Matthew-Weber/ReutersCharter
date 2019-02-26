@@ -364,7 +364,7 @@ class ChartBase extends EventEmitter {
 		//Define columns of data to chart, and the names to display
 		//same logic as above, trying to determine if they are dfined ata ll, if they are an object, or if arrays.
 		if (!this.columnNames){
-			this.columnNames = _.keys(data[0]).filter( (d) => (d != "date" && d != "category"  && d !== "type"  && d !== "rawDate" && d !== "displayDate"  && d!== this.xValue) );
+			this.columnNames = _.keys(data[0]).filter( (d) => (d != "date" && d != "category"  && d !== "type"  && d !== "rawDate" && d !== "displayDate"  && d!== this.xValue && d!== this.moeColumn) );
 			this.columnNamesDisplay = this.columnNames;
 		}
 		if (_.isObject(this.columnNames) && !_.isArray(this.columnNames)){
