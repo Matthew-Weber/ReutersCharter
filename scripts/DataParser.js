@@ -57,6 +57,8 @@ class DataParser extends EventEmitter {
 					point[key] = parseFloat(value);
 				}
 			})
+			point.uniqueid = index;
+			point.visible = true;
 
 		})
 

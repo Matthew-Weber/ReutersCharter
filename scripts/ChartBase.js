@@ -86,7 +86,41 @@ class ChartBase extends EventEmitter {
 			      : formatYear)(date);
 			},
 			annotationType:d3.annotationLabel,
-			annotationDebug:false					    
+			annotationDebug:false,
+			hardRadius:5,
+			idField:"uniqueid",
+			radiusModifier:1.5,	
+			customYAxis: (g) =>{
+				let s = g.selection ? g.selection() : g;
+				g.call(this.yAxis)
+				s.select(".domain").remove();
+				s.selectAll(".tick line").attr("x1", -this.margin.left)
+				s.selectAll(".tick text").attr("x", -8).attr("dy", -4);
+				if (this.horizontal){
+					s.selectAll(".tick line").attr("x1", 0)				
+					s.selectAll(".tick text").attr("x", -8).attr("dy", 2);
+					if (this.yorient == "Right"){
+						s.selectAll(".tick text").attr("x", 8)
+					}
+				}
+				if (this.yorient == "Right" && !this.horizontal){
+					s.selectAll(".tick line").attr("x1", this.margin.right - 8)				
+					s.selectAll(".tick text").attr("x", 8).attr("dy", -4);				
+				}
+				
+				
+				if (s !== g) g.selectAll(".tick text").attrTween("x", null).attrTween("dy", null);		
+			},
+			customXAxis: (g) =>{
+				let s = g.selection ? g.selection() : g;
+				g.call(this.xAxis)
+				s.select(".domain").remove();
+				if (this.horizontal){
+					s.selectAll(".tick:last-of-type text").attr("text-anchor", "end")
+				}
+				if (s !== g) g.selectAll(".tick text").attrTween("x", null).attrTween("dy", null);		
+			}		
+													    
 		    
 		}
 		_.each(this.defaults, (item, key) => {
@@ -229,7 +263,7 @@ class ChartBase extends EventEmitter {
 		this.setOptDataTransforms ();
 		this.setOptDateParse(data);
 		this.setOptChartColumns(data);
-		this.setOptColorScales();
+		this.setOptColorScales(data);
 		this.setOptHasLegend(data);
 		this.renderBaseTemplate();		
 		this.setOptSelectors();
@@ -330,7 +364,7 @@ class ChartBase extends EventEmitter {
 		//Define columns of data to chart, and the names to display
 		//same logic as above, trying to determine if they are dfined ata ll, if they are an object, or if arrays.
 		if (!this.columnNames){
-			this.columnNames = _.keys(data[0]).filter( (d) => (d != "date" && d != "category"  && d !== "type"  && d !== "rawDate" && d !== "displayDate") );
+			this.columnNames = _.keys(data[0]).filter( (d) => (d != "date" && d != "category"  && d !== "type"  && d !== "rawDate" && d !== "displayDate"  && d!== this.xValue) );
 			this.columnNamesDisplay = this.columnNames;
 		}
 		if (_.isObject(this.columnNames) && !_.isArray(this.columnNames)){
@@ -558,6 +592,8 @@ class ChartBase extends EventEmitter {
 	}
 	
 	barCalculations(){
+		if (this.chartType == "scatter"){return}
+
 		//this seems silly, but essentially need to know how many data points are in the data, but each series being plotted may have different amounts of data points, so this loops through and finds the longest one.
 		this.dataLength = 0;		
 		this.chartData.forEach( (d) => {
@@ -610,12 +646,20 @@ class ChartBase extends EventEmitter {
 		this.zeroLine = this.svg.append("line")
 			.attrs({
 				"class":"zeroAxis",
-				"clip-path":`url(#clip${this.targetDiv})`,
+				"clip-path":() => {
+					if (this.yorient != "Right"){
+						return `url(#clip${this.targetDiv})`
+					}
+					
+				},
 				[`${this.xOrY}1`]:() => {
 					if (this.horizontal){return 0;}
 					return -this.margin[this.leftOrTop];				
 				},
-				[`${this.xOrY}2`]:this[this.widthOrHeight],
+				[`${this.xOrY}2`]:() =>{ 
+					if (this.yorient == "Right"){return this[this.widthOrHeight] + this.margin.right - 8}
+					return this[this.widthOrHeight]
+				},
 				[`${this.yOrX}1`]:this.scales.y(0),
 				[`${this.yOrX}2`]:this.scales.y(0)
 			})
@@ -668,7 +712,12 @@ class ChartBase extends EventEmitter {
 			}					
 			return this.multiFormat(d)
 		}
-		let s = this.numbFormat(d)
+		
+		let s = d		
+		if (this.scaleNumbFormat){
+			s = this.numbFormat(d)
+		}
+
 		if (this[`${this.yOrX}Value`] == "category"){ s = d}
 		if (!this.horizontal){
 			return nodes[i].parentNode.nextSibling
@@ -754,16 +803,6 @@ class ChartBase extends EventEmitter {
 	}
 	
 	appendXAxis(){
-		//calling custom axis allows you to control style aspects inside of the transition.  for x axis, main thing is horizontal, make last tick right justified.
-		this.customXAxis = (g) =>{
-			let s = g.selection ? g.selection() : g;
-			g.call(this.xAxis)
-			s.select(".domain").remove();
-			if (this.horizontal){
-				s.selectAll(".tick:last-of-type text").attr("text-anchor", "end")
-			}
-			if (s !== g) g.selectAll(".tick text").attrTween("x", null).attrTween("dy", null);		
-		}
 		//translates the x axis to where it belongs and calls it.
 		this.addXAxis = this.svg.append("svg:g")
 		    .attr("class", "x axis")		
@@ -782,21 +821,10 @@ class ChartBase extends EventEmitter {
 	        .call(this.customXAxis);				
 	}
 	
-	appendYAxis(){
-		//like x axis, custom transitions the setup of the ticks.  pushes them to the left, pushes up the text, accounts for horizontal.
-		this.customYAxis = (g) =>{
-			let s = g.selection ? g.selection() : g;
-			g.call(this.yAxis)
-			s.select(".domain").remove();
-			s.selectAll(".tick line").attr("x1", -this.margin.left)
-			s.selectAll(".tick text").attr("x", -8).attr("dy", -4);
-			if (this.horizontal){
-				s.selectAll(".tick line").attr("x1", 0)				
-				s.selectAll(".tick text").attr("x", -8).attr("dy", 0);
-			}
-			if (s !== g) g.selectAll(".tick text").attrTween("x", null).attrTween("dy", null);		
-		}
 
+
+	appendYAxis(){
+		//custom y axis is defined in defaults, and makes much our formatting work.
 		//transform based on orientation.
 		this.addYAxis = this.svg.append("svg:g")
 		    .attr("class", "y axis")			
@@ -812,8 +840,6 @@ class ChartBase extends EventEmitter {
 
         	})
 	    	.call(this.customYAxis); 	
-
-	    				
 	}
 	
 
@@ -879,7 +905,6 @@ class ChartBase extends EventEmitter {
 		if (this.chartLayout =="sideBySide"){
 			this.axisIsCloned = true;
 			let $xaxis = this.$(`.${this.xOrY}.axis`)
-
 			this.chartData.forEach( (d,i) => {
 				if (i == 0){return}
 				let heightFactor = this.height;
@@ -888,7 +913,7 @@ class ChartBase extends EventEmitter {
 					heightFactor = (i * (this[this.widthOrHeight] / this.numberOfObjects())) +this.widthOfBar()/2;
 					widthFactor = 0;
 				}
-				$xaxis.clone().attr("transform",`translate(${widthFactor},${heightFactor})`).appendTo($xaxis.parent())				
+				$xaxis.clone().attr("transform",`translate(${widthFactor},${heightFactor})`).appendTo($xaxis.parent())
 				
 			})
 		}
@@ -903,12 +928,17 @@ class ChartBase extends EventEmitter {
 			this.getXAxis();			
 			this.appendXAxis();
 			this.adjustXTicks();
-			this.createSideLayoutAxis();
+			if (!this.horizontal){
+				this.createSideLayoutAxis();				
+			}
 		}
 		if (this.includeYAxis){
 			this.getYAxis();
 			this.appendYAxis();		
-			this.topTick(this.dataLabels);			
+			this.topTick(this.dataLabels);
+			if (this.horizontal){
+				this.createSideLayoutAxis();				
+			}						
 		}
 		this.emit("chart:axisRendered", this)
 		
@@ -1602,7 +1632,10 @@ class ChartBase extends EventEmitter {
 					if (this.horizontal){return 0;}
 					return -this.margin[this.leftOrTop];				
 				},
-				[`${this.xOrY}2`]:this[this.widthOrHeight],
+				[`${this.xOrY}2`]:() =>{ 
+					if (this.yorient == "Right"){return this[this.widthOrHeight] + this.margin.right - 8}
+					return this[this.widthOrHeight]
+				},
 				[`${this.yOrX}1`]:this.scales.y(0),
 				[`${this.yOrX}2`]:this.scales.y(0)
 			})		
@@ -1731,15 +1764,6 @@ class ChartBase extends EventEmitter {
 		if (this.updateCount > 0 || this.firstRun){
 			this.adjustXTicks()
 		}
-		this.customXAxis = (g) =>{
-			let s = g.selection ? g.selection() : g;
-			g.call(this.xAxis)
-			s.select(".domain").remove();
-			if (this.horizontal){
-				s.selectAll(".tick:last-of-type text").attr("text-anchor", "end")
-			}
-			if (s !== g) g.selectAll(".tick text").attrTween("x", null).attrTween("dy", null);		
-		}		
 
 	    d3.selectAll(`#${this.targetDiv} .x.axis`)
 			.transition("xAxisTransition")
@@ -1760,21 +1784,7 @@ class ChartBase extends EventEmitter {
 	}	
 	
 	updateYAxis(duration){
-		//recall the y axis. ditto repeating custom axis.  man, that bothers me.
-		this.customYAxis = (g) =>{
-			let s = g.selection ? g.selection() : g;
-			g.call(this.yAxis)
-			s.select(".domain").remove();
-			s.selectAll(".tick line").attr("x1", -this.margin.left)
-			s.selectAll(".tick text").attr("x", -8).attr("dy", -4);
-			if (this.horizontal){
-				s.selectAll(".tick line").attr("x1", 0)				
-				s.selectAll(".tick text").attr("x", -8).attr("dy", 2);
-			}
-			
-			if (s !== g) g.selectAll(".tick text").attrTween("x", null).attrTween("dy", null);		
-		}
-
+		//recall the y axis. 
 	    this.addYAxis
 			.transition()
 			.duration(duration)	    

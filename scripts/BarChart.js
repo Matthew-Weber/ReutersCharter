@@ -325,7 +325,7 @@ class BarChart extends ChartBase {
 					if (this.horizontal){return 3}
 				}
 			})
-			.text((d)=>d.value)
+			.text((d)=> this.numbFormat(d.value))
 		
 	}
 
@@ -421,7 +421,7 @@ class BarChart extends ChartBase {
 		//if we have labels, have to update them too.
 		this.barChart.selectAll(".barLabel")
 			.data( (d) => d.values)
-			.text((d)=>d.value)
+			.text((d)=> this.numbFormat(d.value))
 			.transition()
 			.duration(1000)
 			.attrs({

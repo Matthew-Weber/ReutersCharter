@@ -1,0 +1,316 @@
+import { ChartBase } from './ChartBase.js'
+let d3formatter = require("d3-format");
+let d3 = Object.assign(d3formatter, require("d3-fetch"), require("d3-time-format"), require("d3-scale"), require("d3-axis"), require("d3-color"), require("d3-path"), require("d3-selection"), require("d3-selection-multi"), require("d3-shape"), require("d3-transition"), require("d3-array"));
+import textures from "textures"
+import scatterChartLegendTemplate from '../templates/scatterChartLegendTemplate.html'
+
+class ScatterChart extends ChartBase {
+	constructor(opts){
+		super(opts);
+		this.chartType = "scatter";	
+		this.legendTemplate = scatterChartLegendTemplate;
+		this.hasLegend = false;
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////
+	///// set scales.
+	//////////////////////////////////////////////////////////////////////////////////  	
+
+	xScaleMin (){
+		if (this.xScaleVals){ return this.xScaleVals[0]}
+		return d3.min(this.chartData, (d) => {
+			return d[this.xValue];
+		})
+	}
+	
+	xScaleMax (){
+		if (this.xScaleVals){ return this.xScaleVals[this.xScaleVals.length-1]}
+		return d3.max(this.chartData, (d) => {
+			return d[this.xValue];
+		})	
+	}
+	
+	xScaleRange (){
+		//return range
+		return [0, this[this.widthOrHeight]]
+	}
+
+	xScaleDomain (){
+		let domain = [this.xScaleMin(),this.xScaleMax()];
+		if (this.xScaleType == "Point" || this.xScaleType == "Band"){
+			domain = this.chartData[0].values.map( (d) => d.category)
+		}
+		return domain;	
+	}
+		
+	getXScale () {	
+		//create the scales, 
+		if (!this.xScaleVals){			
+			return d3[`scale${this.xScaleType}`]()
+				.domain(this.xScaleDomain())
+				.range(this.xScaleRange())
+				.nice(this.xScaleTicks)						
+		}else{			
+			return d3[`scale${this.xScaleType}`]()
+				.domain(this.xScaleDomain())
+				.range(this.xScaleRange())
+		}		
+	}
+	
+	yScaleMin (){
+		//find y min.  Is different if stacked.  also, if greater than 0, return 0.
+		if (this.yScaleVals){ return this.yScaleVals[0]}
+		return d3.min(this.chartData, (d) => {
+			return d[this.yValue];
+		})
+	}
+	
+	yScaleMax (){
+		//find max, account for stacks.
+		if (this.yScaleVals){ return this.yScaleVals[this.yScaleVals.length-1]}
+		return d3.max(this.chartData, (d) => {
+			return d[this.yValue];
+		})	
+	}
+	
+	yScaleRange (){
+		return [this[this.heightOrWidth],0];		
+	}
+	
+	yScaleDomain (){
+		//determine the domain.
+		let domain = [this.yScaleMin(),this.yScaleMax()];
+		if (this.yScaleType == "Point" || this.yScaleType == "Band"){
+			domain = this.chartData[0].values.map( (d) => d.category)
+		}
+		return domain;
+	}
+			
+	getYScale () {
+		//return the scales
+		if (!this.yScaleVals || this.hasZoom){			
+			return d3[`scale${this.yScaleType}`]()
+				.domain(this.yScaleDomain())
+				.range(this.yScaleRange())
+				.nice(this.yScaleTicks)						
+		}else{			
+			return d3[`scale${this.yScaleType}`]()
+				.domain([this.yScaleVals[0],this.yScaleVals[this.yScaleVals.length - 1]])
+				.range(this.yScaleRange())
+		}
+	}
+	
+	setOptColorScales(data){		
+		//Define Color Scale
+		//again, if object, make domain and range from object keys and values.  otherwise use columnNames from above as domain, and array of colors as colors.		
+		if (!this.colorValue){return}
+		this.colorScale = d3.scaleOrdinal();				
+		if (_.isObject(this.colors) && !_.isArray(this.colors)){
+			this.colorScale.domain(_.keys(this.colors));
+			this.colorScale.range(_.values(this.colors));
+		}
+		if (_.isArray(this.colors)){
+			let colorDomain = _.uniq(_.map(data, this.colorValue));
+			this.colorScale.domain(colorDomain);
+			this.colorScale.range(this.colors);
+		}		
+	}
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	///// LEGEND.
+	//////////////////////////////////////////////////////////////////////////////////  	
+
+	setOptHasLegend(){
+		//turns off the legend if plotting only one thing.  Unless legend specifically asked for in block.
+		if (this.colorValue && this.hasLegend != "off"){
+			this.hasLegend = true;
+		}		
+	}			
+
+	
+	renderLegend(){
+		this.emit("chart:renderingLegend", this)
+		
+		if(!this.hasLegend || !this.colorValue){
+			return;
+		}
+
+		this.renderLegendTemplate();
+		this.renderLegendClickEvent();
+		this.defineLegendSelections();
+		this.setLegendPositions();		
+
+		
+		this.emit("chart:legendRendered", this)
+
+	}	
+
+	renderLegendTemplate(){
+		this.$legendEl.html(this.legendTemplate({data:this.chartData,self:this}));		
+	}
+	
+
+
+	
+	updateVisibility (data,id,$el){
+		let currentData = data.filter((d) => {
+			return id == d[this.colorValue]
+		})
+		if($el.hasClass("clicked")){
+			currentData.forEach( (d) => {
+				d.visible = true;
+			})
+		}else{
+			currentData.forEach( (d) => {
+				d.visible = false;
+			})
+		}
+	}
+	
+	makeChartData (data){
+		//reruns data sorts and stacks to account for new or removed data.
+		let filtered = data.filter( (d) => d.visible )
+		return filtered;
+	}	
+	
+	setLegendPositions(){
+		//want legend items on the right to sort based on what is included or not, so they all have a top style applied.
+		if (!this.hasLegend){
+			return;
+		}
+		let depth = 0;										
+		$(".legendItems").each((i)=>{
+			let $el =  $(".legendItems").eq(i);
+			if ($el.hasClass("clicked") ){
+				return
+			}
+			let returnDepth = depth
+			depth += $el.height() +5
+			$el.css({"top":returnDepth+"px"})
+		})
+		$(".legendItems.clicked").each((i)=>{
+			let $el =  $(".legendItems.clicked").eq(i);
+			let returnDepth = depth
+			depth += $el.height() +5
+			$el.css({"top":returnDepth+"px"})		
+		})		
+		
+	}		
+	
+
+	//////////////////////////////////////////////////////////////////////////////////
+	///// render.
+	//////////////////////////////////////////////////////////////////////////////////  	
+
+
+	render (){
+		this.emit("chart:rendering", this)		
+		console.log(this.chartData);
+		this.appendCircles();
+
+				
+		this.emit("chart:rendered", this)		
+	}
+
+	setFill(d){
+		if (this.colorValue){
+			return this.colorScale(d[this.colorValue]);			
+		}
+		return 
+	}
+
+	setStroke(d){
+		if (this.colorValue){
+			return this.colorScale(d[this.colorValue]);			
+		}
+		return
+	}
+	
+	appendCircles(){
+		this.scatterPlot = this.svg.selectAll("circle")
+			.data(this.chartData)
+			.enter()
+			.append("circle")
+			.attr("r", (d) => {
+				if (this.rValue){
+					return (Math.sqrt(d[this.rValue])/Math.PI) * this.radiusModifier;	   
+				}else{
+					return this.hardRadius;
+				}
+			})
+			.attr("cy", (d) => this.scales.y(d[this.yValue]))
+			.attr("cx", (d) => this.scales.x(d[this.xValue]))
+			.attr("class", "scatter-dot")
+			.style("fill", (d) => this.setFill(d))				
+			.style("stroke", (d) => this.setStroke(d))
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////
+	///// UDPATE.
+	//////////////////////////////////////////////////////////////////////////////////  	
+	
+	update(){		
+		this.baseUpdate();
+		this.emit("chart:updating", this)		
+		this.updateCircles();
+		this.updateCirclesExit();
+		this.updateCirclesEnter();
+		this.emit("chart:updated", this)					
+		
+	}
+	
+	updateCircles(){
+		this.scatterPlot
+			.data(this.chartData, (d) => d[this.idField] )
+			.transition()
+			.duration(1000)
+			.attr("cy", (d) => this.scales.y(d[this.yValue]))
+			.attr("cx", (d) => this.scales.x(d[this.xValue]))
+			.style("fill", (d) => this.setFill(d))				
+			.style("stroke", (d) => this.setStroke(d))
+			.attr("r", (d) => {
+				if (this.rValue){
+					return (Math.sqrt(d[this.rValue])/Math.PI) * this.radiusModifier;	   
+				}else{
+					return this.hardRadius;
+				}
+			})			
+	}
+	
+	updateCirclesExit(){
+		this.scatterPlot
+			.data(this.chartData, (d) => d[this.idField] )
+			.exit()
+			.transition()
+			.duration(1000)
+			.attr("r", 0)			
+	}
+	
+	updateCirclesEnter(){
+		this.scatterPlot
+			.data(this.chartData, (d) => d[this.idField] )
+			.enter()
+			.append("circle")
+			.attr("cy", (d) => this.scales.y(d[this.yValue]))
+			.attr("cx", (d) => this.scales.x(d[this.xValue]))
+			.style("fill", (d) => this.setFill(d))				
+			.style("stroke", (d) => this.setStroke(d))
+			.attr("class", "scatter-dot")
+			.transition()
+			.duration(1000)
+			.attr("r", (d) => {
+				if (this.rValue){
+					return (Math.sqrt(d[this.rValue])/Math.PI) * this.radiusModifier;	   
+				}else{
+					return this.hardRadius;
+				}
+			})			
+	}	
+
+	
+	
+	
+	
+}
+
+export { ScatterChart }
