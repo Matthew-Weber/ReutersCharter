@@ -89,26 +89,62 @@ class ChartBase extends EventEmitter {
 			annotationDebug:false,
 			hardRadius:5,
 			idField:"uniqueid",
-			radiusModifier:1.5,	
+			radiusModifier:1.5,
+			yAxisLineLength:"default",
+			xAxisLineLength:"default",	
 			customYAxis: (g) =>{
 				let s = g.selection ? g.selection() : g;
 				g.call(this.yAxis)
-				s.select(".domain").remove();
-				s.selectAll(".tick line").attr("x1", -this.margin.left)
-				s.selectAll(".tick text").attr("x", -8).attr("dy", -4);
+
+				let rightMod = 1;
+				let rightMarg = -this.margin.left;
+				if (this.yorient == "Right"){
+					rightMod = -1;
+					rightMarg = -this.margin.right +8 ;
+				}
+				
+				let propObj = {
+					lineX1 : rightMarg * rightMod,
+					lineX2 : this.width * rightMod,
+					textX : -8 * rightMod,
+					textDy : -4					
+				}
+				
 				if (this.horizontal){
-					s.selectAll(".tick line").attr("x1", 0)				
-					s.selectAll(".tick text").attr("x", -8).attr("dy", 2);
-					if (this.yorient == "Right"){
-						s.selectAll(".tick text").attr("x", 8)
+					propObj = {
+						lineX1 : 0,
+						lineX2 : -6 * rightMod,
+						textX : -8 * rightMod,
+						textDy : 2					
 					}
 				}
-				if (this.yorient == "Right" && !this.horizontal){
-					s.selectAll(".tick line").attr("x1", this.margin.right - 8)				
-					s.selectAll(".tick text").attr("x", 8).attr("dy", -4);				
+				
+				if (this.yAxisLineLength == "long"){
+					propObj = {
+						lineX1 : 0,
+						lineX2 :this.width * rightMod,
+						textX : -8 * rightMod,
+						textDy : 2					
+					}					
 				}
+
+				if (this.yAxisLineLength == "short"){
+					propObj = {
+						lineX1 : -4 * rightMod,
+						lineX2 :-10 * rightMod,
+						textX : -12 * rightMod,
+						textDy : 2					
+					}					
+				}
+
+ 
 				
+				s.select(".domain").remove();
+				s.selectAll(".tick line").attr("x1", propObj.lineX1).attr("x2", propObj.lineX2)
+				s.selectAll(".tick text").attr("x", propObj.textX).attr("dy", propObj.textDy);
 				
+							
+				if (s !== g) g.selectAll(".tick line").attrTween("x1", null).attrTween("x2", null);
 				if (s !== g) g.selectAll(".tick text").attrTween("x", null).attrTween("dy", null);		
 			},
 			customXAxis: (g) =>{
@@ -118,6 +154,34 @@ class ChartBase extends EventEmitter {
 				if (this.horizontal){
 					s.selectAll(".tick:last-of-type text").attr("text-anchor", "end")
 				}
+				
+				let topMod = 1;
+				if (this.xorient == "Top"){
+					topMod = -1;
+				}
+				
+				let propObj = {
+					lineY1 :0,
+					lineY2 : 6 * topMod,
+				}
+				
+				if (this.horizontal || this.xAxisLineLength == "long"){
+					propObj = {
+						lineY1 : 0,
+						lineY2 : -this.height  * topMod,
+					}
+				}
+				
+				if (this.xAxisLineLength == "short"){
+					propObj = {
+						lineY1 :0,
+						lineY2 : 6 * topMod,
+					}
+				}								
+				
+				s.selectAll(".tick line").attr("y1", propObj.lineY1).attr("y2", propObj.lineY2)
+
+				if (s !== g) g.selectAll(".tick line").attrTween("y1", null).attrTween("y2", null);
 				if (s !== g) g.selectAll(".tick text").attrTween("x", null).attrTween("dy", null);		
 			}		
 													    
@@ -322,9 +386,9 @@ class ChartBase extends EventEmitter {
 	setOptScaleTypes (){
 		//attempt to determine scale types.
 		if (this.xValue == "date"){ this.xScaleType = "Time"; }
-		if (this.xValue == "category"){ this.xScaleType = "Point"; }
+		if (this.xValue.indexOf("category") > -1 ){ this.xScaleType = "Point"; }
 		if (this.yValue == "date"){ this.yScaleType = "Time"; }
-		if (this.yValue == "category"){ this.yScaleType = "Point"; }		
+		if (this.yValue.indexOf("category") > -1){ this.yScaleType = "Point"; }		
 	}
 	
 	setOptHorizontal(){
@@ -592,7 +656,7 @@ class ChartBase extends EventEmitter {
 	}
 	
 	barCalculations(){
-		if (this.chartType == "scatter"){return}
+
 
 		//this seems silly, but essentially need to know how many data points are in the data, but each series being plotted may have different amounts of data points, so this loops through and finds the longest one.
 		this.dataLength = 0;		
@@ -653,11 +717,11 @@ class ChartBase extends EventEmitter {
 					
 				},
 				[`${this.xOrY}1`]:() => {
-					if (this.horizontal){return 0;}
+					if (this.horizontal || this.yAxisLineLength == "long" || this.yAxisLineLength == "short"){return 0;}
 					return -this.margin[this.leftOrTop];				
 				},
 				[`${this.xOrY}2`]:() =>{ 
-					if (this.yorient == "Right"){return this[this.widthOrHeight] + this.margin.right - 8}
+					if (this.yorient == "Right" && this.yAxisLineLength != "long" && this.yAxisLineLength != "short"){return this[this.widthOrHeight] + this.margin.right - 8}
 					return this[this.widthOrHeight]
 				},
 				[`${this.yOrX}1`]:this.scales.y(0),
@@ -734,8 +798,8 @@ class ChartBase extends EventEmitter {
 			}
 			return this.multiFormat(d)
 		}
-		let s = this.numbFormat(d)
-		if (this[`${this.xOrY}Value`] == "category"){ s = d}
+		let s = this.numbFormat(d)			
+		if (this[`${this.xOrY}Value`] == "category" || !this.scaleNumbFormat){ s = d}
 		if (this.horizontal){
 			return nodes[i].parentNode.nextSibling
 				? "\xa0" + s
@@ -753,9 +817,11 @@ class ChartBase extends EventEmitter {
 		    .tickFormat(this.xTickFormatter);
 		
 		//change the tic size if it's sideways    
+/*
 		if (this.horizontal){
 			this.xAxis.tickSize(0 - this.height).tickPadding(12);
 		}
+*/
 
 		//forces a tick for every value on the x scale 
 		if (this.tickAll){
@@ -789,11 +855,13 @@ class ChartBase extends EventEmitter {
 			.tickPadding(20);
 		}	
 		//tick size is different depending on layout
+/*
 		if (!this.horizontal){
 			this.yAxis.tickSize(0-this.width);
 		}else{
 			this.yAxis.tickSize(0);
-		}				
+		}	
+*/			
 
 		//if autoScale ing then let it use the default auto scale.  hasZoom and multiData automatically get auto-scaling
 		if (this.yScaleVals && !this.hasZoom){	
@@ -1151,6 +1219,7 @@ class ChartBase extends EventEmitter {
 			        if (this.showTip == "off"){
 				        return "none";				        
 			        }
+			        if (this.chartType == "scatter"){return "block"}
 			        if (this.showTip || !this.hasLegend){
 				        return "block";
 			        }
@@ -1190,7 +1259,6 @@ class ChartBase extends EventEmitter {
 		this.updateTooltipContent();
 		this.updateLegendContent();
 		this.setLegendPositions();
-		
 		this.tooltip.style("opacity",1)
 
 	}
@@ -1203,7 +1271,7 @@ class ChartBase extends EventEmitter {
 
 		this.tooltip.style("opacity",0)
 		
-		if (this.hasLegend){
+		if (this.hasLegend && this.chartType != "scatter"){
 			this.legendItems.selectAll(".valueTip")			
 				.html("<br>");
 
@@ -1216,6 +1284,10 @@ class ChartBase extends EventEmitter {
 		if (this.chartType == "bar"){
 			this.barChart.selectAll(".bar")
 				.classed("lighter", false);			
+		}
+		if (this.chartType == "scatter"){
+			this.scatterPlot
+			.classed("lighter",false);
 		}
 
 	
@@ -1631,11 +1703,11 @@ class ChartBase extends EventEmitter {
 			.duration(duration)		
 			.attrs({
 				[`${this.xOrY}1`]:() => {
-					if (this.horizontal){return 0;}
+					if (this.horizontal || this.yAxisLineLength == "long" || this.yAxisLineLength == "short"){return 0;}
 					return -this.margin[this.leftOrTop];				
 				},
 				[`${this.xOrY}2`]:() =>{ 
-					if (this.yorient == "Right"){return this[this.widthOrHeight] + this.margin.right - 8}
+					if (this.yorient == "Right" && this.yAxisLineLength != "long" && this.yAxisLineLength != "short"){return this[this.widthOrHeight] + this.margin.right - 8}
 					return this[this.widthOrHeight]
 				},
 				[`${this.yOrX}1`]:this.scales.y(0),
@@ -1671,7 +1743,7 @@ class ChartBase extends EventEmitter {
 		}
 		this.options.margin = this.options.margin || {};
 		if (!this.options.margin.left){
-			this.margin.left = 9 +  maxWidth
+			this.margin.left = 13 +  maxWidth
 			if (this.yorient == "Right"){
 				this.margin.left = 5
 			}
@@ -1757,7 +1829,7 @@ class ChartBase extends EventEmitter {
 	updateYScales(){
 		//update y axis scales, same reason.
 		this.yAxis.scale(this.scales[this.yOrX]);
-		this[`${this.yOrX}Axis`].tickSize(0-this[this.widthOrHeight]);
+		//this[`${this.yOrX}Axis`].tickSize(0-this[this.widthOrHeight]);
 		this.yAxis.ticks(this[`${this.yOrX}ScaleTicks`]);
 	}
 	

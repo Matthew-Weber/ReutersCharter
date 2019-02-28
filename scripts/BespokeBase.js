@@ -5,13 +5,12 @@ import textures from "textures"
 import scatterChartLegendTemplate from '../templates/scatterChartLegendTemplate.html'
 import scatterChartTipTemplate from '../templates/scatterChartTipTemplate.html'
 
-class ScatterChart extends ChartBase {
+class BespokeBase extends ChartBase {
 	constructor(opts){
 		super(opts);
-		this.chartType = "scatter";	
 		this.legendTemplate = scatterChartLegendTemplate;
 		this.tipTemplate = scatterChartTipTemplate;
-		this.hasLegend = false;
+
 		if (!this.options.xAxisLineLength){
 			this.xAxisLineLength = "long";			
 		}
@@ -24,6 +23,7 @@ class ScatterChart extends ChartBase {
 		if (!this.tipValuesDisplay.xValue){this.tipValuesDisplay.xValue = this.xValue}
 		if (!this.tipValuesDisplay.yValue){this.tipValuesDisplay.yValue = this.yValue}
 		if (!this.tipValuesDisplay.rValue){this.tipValuesDisplay.rValue = this.rValue}		
+		console.log(this.tipValuesDisplay)		
 
 	}
 
@@ -47,9 +47,6 @@ class ScatterChart extends ChartBase {
 	
 	xScaleRange (){
 		//return range
-		if (this.horizontal){
-			return [this[this.widthOrHeight],0]			
-		}
 		return [0, this[this.widthOrHeight]]
 	}
 
@@ -95,18 +92,17 @@ class ScatterChart extends ChartBase {
 	}
 	
 	yScaleRange (){
-		if (this.horizontal){
-			return [0,this[this.heightOrWidth]]
-		}
 		return [this[this.heightOrWidth],0];		
 	}
 	
 	yScaleDomain (){
 		//determine the domain.
+		console.log(this.chartData)
 		let domain = [this.yScaleMin(),this.yScaleMax()];
 		if (this.yScaleType == "Point" || this.yScaleType == "Band"){
 			domain = this.chartData.map( (d) => d[this.yValue])
 		}
+		console.log(domain)
 		return domain;
 	}
 			
@@ -128,21 +124,7 @@ class ScatterChart extends ChartBase {
 		}
 	}
 	
-	setOptColorScales(data){		
-		//Define Color Scale
-		//again, if object, make domain and range from object keys and values.  otherwise use columnNames from above as domain, and array of colors as colors.	
-		if (!this.colorValue){return}
-		this.colorScale = d3.scaleOrdinal();				
-		if (_.isObject(this.colors) && !_.isArray(this.colors)){
-			this.colorScale.domain(_.keys(this.colors));
-			this.colorScale.range(_.values(this.colors));
-		}
-		if (_.isArray(this.colors)){
-			let colorDomain = _.uniq(_.map(data, this.colorValue));
-			this.colorScale.domain(colorDomain);
-			this.colorScale.range(this.colors);
-		}		
-	}
+	highlightCurrent (){}
 
 	barCalculations(){}
 	
@@ -249,207 +231,9 @@ class ScatterChart extends ChartBase {
 		
 	}	
 
-	highlightCurrent (){
-		//for bars, classes all the other bars to be lighter so this one stands out.
-		this.scatterPlot
-			.classed("lighter", (d) => {
-				if (d[this.xValue] == this.closestDate){
-					return false;		
-				}
-				return true;		
-			});			
-		
-		
-	}
-				
-	
-
-	//////////////////////////////////////////////////////////////////////////////////
-	///// render.
-	//////////////////////////////////////////////////////////////////////////////////  	
-
-
-	render (){
-		this.emit("chart:rendering", this)		
-
-		this.$("svg").css({"overflow":"visible"});
-
-		this.appendCircles();
-		if (this.scaleLabels){
-			this.renderScaleLables();
-		}
-				
-		this.emit("chart:rendered", this)		
-	}
-
-	setFill(d){
-		if (this.noFill){return "none"}
-		if (this.colorValue){
-			return this.colorScale(d[this.colorValue]);			
-		}
-		return 
-	}
-
-	setStroke(d){
-		if (this.noStroke){return "none"}
-
-		if (this.colorValue){
-			return this.colorScale(d[this.colorValue]);			
-		}
-		return
-	}
-	
-	appendCircles(){
-		this.scatterPlot = this.svg.selectAll("circle")
-			.data(this.chartData)
-			.enter()
-			.append("circle")
-			.attr("r", (d) => {
-				if (this.rValue){
-					return (Math.sqrt(d[this.rValue])/Math.PI) * this.radiusModifier;	   
-				}else{
-					return this.hardRadius;
-				}
-			})
-			.attr(`c${this.yOrX}`, (d) => this.scales.y(d[this.yValue]))
-			.attr(`c${this.xOrY}`, (d) => this.scales.x(d[this.xValue]))
-			.attr("class", "scatter-dot")
-			.style("fill", (d) => this.setFill(d))				
-			.style("stroke", (d) => this.setStroke(d))
-	}
-	
-	renderScaleLables(){
-
-		this.baseSVG.style("margin-bottom","20px");
-		
-		this.baseSVG.append("svg:defs").append("svg:marker")
-		    .attr("id", "triangle")
-		    .attr("refX", 3)
-		    .attr("refY", 3)
-		    .attr("markerWidth", 15)
-		    .attr("markerHeight", 15)
-		    .attr("orient", "auto")
-		    .append("path")
-		    .attr("d", "M 0 0 6 3 0 6 1.5 3")
-		    .style("fill", gray4);
-
-		this.xLabel = this.baseSVG.append("text")
-		this.yLabel = this.baseSVG.append("text")			
-		this.yArrow = this.baseSVG.append("line")
-		this.xArrow = this.baseSVG.append("line")
-		this.updateScaleLabels();
-		
-		
-	}
-	
-	updateScaleLabels(){
-
-		this.xLabel
-			.attr("x", 0)
-			.attr("y", this.height + this.margin.top + this.margin.bottom +17)
-			.text(this.scaleLabels.x)
-			.attr("class", "axislabel x")
-
-		this.yLabel
-			.attr("x", -this.height - this.margin.top - this.margin.bottom -5)
-			.attr("y",-2)
-			.attr("transform", "rotate (270)")					
-			.text(this.scaleLabels.y)
-			.attr("class", "axislabel y")
-
-		let xLength = $('.axislabel.x').width() || $('.axislabel.x')[0].getBoundingClientRect().width 
-		let yLength = $('.axislabel.y').width() || $('.axislabel.y')[0].getBoundingClientRect().height 
-		console.log($('.axislabel.y').width(), $('.axislabel.y')[0].getBoundingClientRect().width,  yLength)	
-		this.yArrow
-			.attr("x1", 0)
-			.attr("x2",0)
-			.attr("y1",this.height + this.margin.top + this.margin.bottom +5 )
-			.attr("y2",this.height + this.margin.top + this.margin.bottom - yLength - 10)
-			.attr("class", "scatter-arrow")
-			.attr("marker-end", "url(#triangle)");
-					
-
-		this.xArrow
-			.attr("x1", 0)
-			.attr("x2",xLength +10)
-			.attr("y1",this.height + this.margin.top + this.margin.bottom +5 )
-			.attr("y2",this.height + this.margin.top + this.margin.bottom +5 )
-			.attr("class", "scatter-arrow")						
-			.attr("marker-end", "url(#triangle)");		
-		
-	}
-
-	//////////////////////////////////////////////////////////////////////////////////
-	///// UDPATE.
-	//////////////////////////////////////////////////////////////////////////////////  	
-	
-	update(){		
-		this.baseUpdate();
-		this.emit("chart:updating", this)		
-		this.updateCircles();
-		this.updateCirclesExit();
-		this.updateCirclesEnter();
-		
-		if (this.scaleLabels){
-			this.updateScaleLabels();
-		}
-				
-		this.emit("chart:updated", this)					
-		
-	}
-	
-	updateCircles(){
-		this.scatterPlot
-			.data(this.chartData, (d) => d[this.idField] )
-			.transition()
-			.duration(1000)
-			.attr(`c${this.yOrX}`, (d) => this.scales.y(d[this.yValue]))
-			.attr(`c${this.xOrY}`, (d) => this.scales.x(d[this.xValue]))
-			.style("fill", (d) => this.setFill(d))				
-			.style("stroke", (d) => this.setStroke(d))
-			.attr("r", (d) => {
-				if (this.rValue){
-					return (Math.sqrt(d[this.rValue])/Math.PI) * this.radiusModifier;	   
-				}else{
-					return this.hardRadius;
-				}
-			})			
-	}
-	
-	updateCirclesExit(){
-		this.scatterPlot
-			.data(this.chartData, (d) => d[this.idField] )
-			.exit()
-			.transition()
-			.duration(1000)
-			.attr("r", 0)			
-	}
-	
-	updateCirclesEnter(){
-		this.scatterPlot
-			.data(this.chartData, (d) => d[this.idField] )
-			.enter()
-			.append("circle")
-			.attr(`c${this.yOrX}`, (d) => this.scales.y(d[this.yValue]))
-			.attr(`c${this.xOrY}`, (d) => this.scales.x(d[this.xValue]))
-			.style("fill", (d) => this.setFill(d))				
-			.style("stroke", (d) => this.setStroke(d))
-			.attr("class", "scatter-dot")
-			.transition()
-			.duration(1000)
-			.attr("r", (d) => {
-				if (this.rValue){
-					return (Math.sqrt(d[this.rValue])/Math.PI) * this.radiusModifier;	   
-				}else{
-					return this.hardRadius;
-				}
-			})			
-	}	
-
-	
 	
 	
 	
 }
 
-export { ScatterChart }
+export { BespokeBase }

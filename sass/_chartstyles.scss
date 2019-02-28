@@ -1,3 +1,107 @@
+$forest1: #C4D6C4 !default;
+$forest2: #A5C3A8 !default;
+$forest3: #73A97F !default;
+$forest4: #008C4E !default;
+$forest5: #007741 !default;
+$forest6: #005027 !default;
+$green1: #CBE1C8 !default;
+$green2: #AED3AB !default;
+$green3: #7DBE80 !default;
+$green4: #0AA74B !default;
+$green5: #008C3E !default;
+$green6: #005E25 !default;
+$olive1: #E0EDCB !default;
+$olive2: #D0E4AF !default;
+$olive3: #B4D682 !default;
+$olive4: #8FC641 !default;
+$olive5: #74A535 !default;
+$olive6: #476E1E !default;
+$lime1: #EFF4CC !default;
+$lime2: #E8EEAF !default;
+$lime3: #DBE580 !default;
+$lime4: #CADB2E !default;
+$lime5: #A6B626 !default;
+$lime6: #6A7812 !default;
+$yellow1: #FCF8CD !default;
+$yellow2: #FBF5B0 !default;
+$yellow3: #F9F17E !default;
+$yellow4: #F6EB0E !default;
+$yellow5: #CAC313 !default;
+$yellow6: #838103 !default;
+$tangerine1: #FFECC6 !default;
+$tangerine2: #FFE3A7 !default;
+$tangerine3: #FFD576 !default;
+$tangerine4: #FDC218 !default;
+$tangerine5: #D0A115 !default;
+$tangerine6: #886A00 !default;
+$orange1: #FDD5BB !default;
+$orange2: #FBBE99 !default;
+$orange3: #F79967 !default;
+$orange4: #F26725 !default;
+$orange5: #C8551D !default;
+$orange6: #843401 !default;
+$red1: #FBC9BA !default;
+$red2: #F8AB98 !default;
+$red3: #F37B68 !default;
+$red4: #EC2033 !default;
+$red5: #C31729 !default;
+$red6: #82000D !default;
+$rose1: #E9C3C8 !default;
+$rose2: #DFA4AE !default;
+$rose3: #D17589 !default;
+$rose4: #C02460 !default;
+$rose5: #A11950 !default;
+$rose6: #6B0031 !default;
+$violet1: #DABFD1 !default;
+$violet2: #C99FBB !default;
+$violet3: #B1709B !default;
+$violet4: #952978 !default;
+$violet5: #7E1E65 !default;
+$violet6: #530041 !default;
+$purple1: #CABDDC !default;
+$purple2: #B19CC9 !default;
+$purple3: #8D6EAE !default;
+$purple4: #653290 !default;
+$purple5: #552479 !default;
+$purple6: #360451 !default;
+$navy1: #BCC2E0 !default;
+$navy2: #9BA4CF !default;
+$navy3: #697CB8 !default;
+$navy4: #0F519F !default;
+$navy5: #0A4286 !default;
+$navy6: #002459 !default;
+$blue1: #C8DAF0 !default;
+$blue2: #ABC8E8 !default;
+$blue3: #7AADDC !default;
+$blue4: #1F8FCE !default;
+$blue5: #1B78AC !default;
+$blue6: #044F74 !default;
+$cyan1: #CFE8F9 !default;
+$cyan2: #B5DDF6 !default;
+$cyan3: #86CCF1 !default;
+$cyan4: #2AB8EB !default;
+$cyan5: #259AC5 !default;
+$cyan6: #0C6785 !default;
+$gray1: #DCDDDE !default;
+$gray2: #BCBEC0 !default;
+$gray3: #939598 !default;
+$gray4: #6D6E71 !default;
+$gray5: #4D4D4F !default;
+$gray6: #414042 !default;
+$magenta1: #F4CCDC !default;
+$magenta2: #E575A6 !default;
+$magenta3: #DF338A !default;
+$magenta4: #9C1B61 !default;
+$magenta5: #740245 !default;
+
+$lightest-gray: #E7E7E7 !default;
+$light-gray:#E6E7E8 !default;
+$basic-gray:#A7A9AC !default;
+$med-gray: #999 !default;
+$dark-gray:#76787A !default;
+$text-gray:#404041 !default;
+
+
 //depth of the chart
 .reuters-chart{
     margin-top: .5rem;
@@ -435,4 +539,41 @@ rect.bar.lighter{
 	font-size:$font-size-xs;
 	text-anchor:middle;
 	font-weight: 700;
+}
+
+.reuters-tooltip {
+	.tipHolder.scatter{
+		margin-top:2px !important;
+	}
+	.colorTip{
+		font-weight: 300;
+		margin:0;
+		line-height: 1;
+		text-transform: uppercase;
+	}
+}
+.scatter-dot{
+	mix-blend-mode:multiply;
+	&.lighter{
+		opacity:0.6;
+	}
+}
+.legendContainer.scatter{
+	margin-top:12px;
+}
+
+.connect-lines{
+	stroke:black;
+	stroke-width:2px;
+}
+
+
+.axislabel{
+	text-anchor:start !important;
+	font-size:0.75rem;
+	fill:$gray4;
+	text-transform: uppercase;
+}
+.scatter-arrow{
+	stroke:$gray4;
 }

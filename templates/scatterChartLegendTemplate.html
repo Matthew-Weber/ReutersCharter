@@ -1,0 +1,17 @@
+<%let domain = t.self.colorScale.domain();
+let range = t.self.colorScale.range();%>
+<div class='legendContainer scatter'>
+	<div class="legend-items-holder">
+		<%domain.forEach( (d,i) => {%>
+			<div class="legendItems" data-id="<%=d%>">
+				<div class='circleTip <%=t.self.chartType%>' style='background-color:<%= range[i]%>;'></div>
+				<div class="legendInline">
+					<div class="nameTip">	<%= d %></div>
+					<div class='valueTip'>
+					</div>
+				</div>
+			</div>
+		<%})%>
+	</div>		
+</div>
+

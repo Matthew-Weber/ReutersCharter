@@ -1,5 +1,50 @@
+import { GraphicUtils } from './GraphicUtils.js' //always import
+import 'bootstrap'; //always import, removing will mess up navigation in the header bar.
+import { ReutersPym } from './ReutersPym.js' //always import, unless DEFNITELY NOT embedable. test if pym active with pymObject.hasPym
+let pymObject = new ReutersPym();
 
-let stockChart = new ReutersCharter.BarChart({
+//import { ReutersUtils } from './utils.js' //Import if using extra things from Investigates. These can be handy.
+//let srepUtils = new ReutersUtils();
+
+//import * as d3 from "d3";
+let formatter = require("d3-format")
+let d3 = Object.assign(formatter, require("d3-fetch"), require("d3-time-format"));
+
+// require("waypoints/lib/jquery.waypoints.js")
+
+//specifically require the templates you want.
+import basicChartLayout from '../templates/basicChartLayout.html'
+$(".main").html(basicChartLayout({data:"this is the data"}))
+
+
+//import ReutersCharter from "ReutersCharter"
+import { ScatterChart } from './ScatterChart.js'
+import { LineChart } from './LineChart.js'
+import { BespokeChart } from './BespokeChart.js'
+
+
+
+/*
+let stockChart = new LineChart({
+	el: "#reutersGraphic-chart1",
+	hasPym: pymObject.hasPym,
+	dataURL: 'data/1timeseries.csv',
+	height:220,
+	//yorient:"Right",
+	//xorient:"Top",	
+	//horizontal:true,
+	yAxisLineLength:"long",
+	//xAxisLineLength:"long",
+	//chartLayout:"sideBySide",
+	//annotations:annotations,
+	//multiDataColumns:["value","percentChange"]
+		
+})
+*/
+
+import { annotations } from './annotations'
+
+let stockChart = new ScatterChart({
 	el: "#reutersGraphic-chart1",
 	hasPym: pymObject.hasPym,
 	
@@ -8,13 +53,14 @@ let stockChart = new ReutersCharter.BarChart({
 	////////////////////////////
 	
 	dataURL: '//d3sl9l9bcxfb5q.cloudfront.net/json/mw-disney-earns',
+	dataURL: 'data/circledata.csv',
 	//dataTransformation:"none", //none, changePrePeriod, cumulatitveTotal, cumulativeChange, percentChange
 	//divisor:.001,	
 	//multiDataColumns:{"gpd":"GDP","unemployment":"Unemployment"}, //can set as an object, or as two arrays below.
 	//multiDataColumns:["gpd","unemployment"],//can use value, changePrePeriod, cumulatitveTotal, cumulativeChange, percentChange
 	//multiDataLabels:[gettext("VALUE"),gettext("PERCENT")],
-	//xValue:'days', //for scatter plots, or two linear scales of line charts.
-	//yValue:'otherThing',
+	//xValue:'google', //for scatter plots, or two linear scales of line charts.
+	//yValue:'date',
 	//xValueSort:"none", //will not sort bespoke xValues
 
 	///////////////////////////////////
@@ -40,8 +86,8 @@ let stockChart = new ReutersCharter.BarChart({
 	//xScaleTicks: 5,
 	//yScaleTicks:5,
 	//yScaleVals: [0,100],
-	//xScaleVals: [parseDate("1/1/16"),parseDate("6/1/16"),parseDate("1/1/17")],
-	//yScaleMin(){return 0}, // can overwrite yScaleMax, yScaleMin, xScaleMax, xScaleMin			
+	//xScaleVals: [parseDate("1/1/16"),parseDate("6/1/16"),parseDate("1/1/17")],	
+	//tickAll:true,
 	//yorient:"Right",
 	//xorient:"Top",
 	//yTickFormat (d,i,nodes) {
@@ -51,10 +97,10 @@ let stockChart = new ReutersCharter.BarChart({
 	//	return d
     //},	
     //includeXAxis:false,
-    //includeYAxis:false,	
+    //includeYAxis:false,
 	//xAxisLineLength:"short", //long or short. long will go all the way across, but not under the tick numbers
 	//yAxisLineLength:"short",				
-
+    	
 
 	///////////////////////////////////
 	///// SORTING                //////
@@ -87,7 +133,7 @@ let stockChart = new ReutersCharter.BarChart({
 	
 	//hasLegend: false,
 	//topLegend:true,
-	//chartBreakPoint:500, //when do you want the legend to go up top
+	chartBreakPoint:800, //when do you want the legend to go up top
 	//navSpacer:true,
 
 	///////////////////////////////////
@@ -164,25 +210,29 @@ let stockChart = new ReutersCharter.BarChart({
 	// how you want these field displayed, "none" turns them off, can also turn off date:"none",category:"none",colorValue:"none"
 	//tipValuesDisplay:{rValue:"GDP",xValue:"Range",yValue:"Price"}, 
 	//hasLegend:"off", //legend will appear if you have a color value, you can force it off if you so desire.
-
 })
 
-//import { annotations } from './annotations'
-
-stockChart.on("chart:updatingBase", ()=>{
+stockChart.on("data:parsed", ()=>{
 	//console.log(stockChart.colors)
 })
 
 
 
+
+
+
+
+
+
 /*
+import { DataStreamParse } from './DataStreamParse.js'
 
 d3.json("//graphics.reuters.com/COMMODITIES-METALS/0100317Z2RY/assetperformance.json").then( (data) => {
 		
-	let commodData = new ReutersCharter.DataStreamParse({data:data})
+	let commodData = new DataStreamParse({data:data})
 	console.log(commodData);
 
-	const dataStreamData = new ReutersCharter.DataStreamParse({
+	const dataStreamData = new DataStreamParse({
 		data:data,
 		dataSeries:3,
 		lookup:{
@@ -195,3 +245,17 @@ d3.json("//graphics.reuters.com/COMMODITIES-METALS/0100317Z2RY/assetperformance.
 
 })
 */
+
+
+
+
+
+
+
+
+
+
+
+
+
+

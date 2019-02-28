@@ -82,8 +82,11 @@ class DataParser extends EventEmitter {
 		this.emit("data:sorted", this)		
 		
 		//scatter charts do not have to be setup into series.
-		if (this.chartType != "scatter"){
+		if (this.chartType == "line" || this.chartType == "bar"){
 			return this.reGroupData(data)
+		}
+		if (this.categorySort != "none"){
+			return this.simpleCatSort(data)
 		}
 		return data
 	}
@@ -168,6 +171,40 @@ class DataParser extends EventEmitter {
 		
 		return this.makeStacks(this.groupSorter(data));		
 		
+	}
+	
+	simpleCatSort(data){
+
+			let plusMinus = 1;
+			let sortValue = this.xValue;
+			if (sortValue == "category"){
+				sortValue = this.yValue;
+			}
+			if (this.categorySort == "descending"){plusMinus = -1}
+			if (this.categorySort == "alphabetical"){sortValue = "category"; plusMinus = -1}
+
+			//sort each of the values arrays first, but now they are not going to match
+			data.sort( (a,b) => {
+					if (a[sortValue] > b[sortValue]){return 1 * plusMinus}
+					if (a[sortValue] < b[sortValue]){return -1 * plusMinus}
+					return 0;
+			})
+			if (!Array.isArray(this.categorySort)){
+				this.categorySort = [];
+				data.forEach( (d) => {
+					this.categorySort.push(d.category);
+				});
+			}
+			data.sort( (a,b) => {
+					let aValue = this.categorySort.indexOf(a.category);
+					let bValue = this.categorySort.indexOf(b.category);
+					if (aValue > bValue){return 1}
+					if (aValue < bValue){return -1}
+					return 0;
+				})
+				
+				return data				
+					
 	}
 	
 	categorySorter(data){
