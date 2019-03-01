@@ -275,9 +275,6 @@ class ScatterChart extends ChartBase {
 		this.$("svg").css({"overflow":"visible"});
 
 		this.appendCircles();
-		if (this.scaleLabels){
-			this.renderScaleLables();
-		}
 				
 		this.emit("chart:rendered", this)		
 	}
@@ -318,66 +315,9 @@ class ScatterChart extends ChartBase {
 			.style("stroke", (d) => this.setStroke(d))
 	}
 	
-	renderScaleLables(){
 
-		this.baseSVG.style("margin-bottom","20px");
-		
-		this.baseSVG.append("svg:defs").append("svg:marker")
-		    .attr("id", "triangle")
-		    .attr("refX", 3)
-		    .attr("refY", 3)
-		    .attr("markerWidth", 15)
-		    .attr("markerHeight", 15)
-		    .attr("orient", "auto")
-		    .append("path")
-		    .attr("d", "M 0 0 6 3 0 6 1.5 3")
-		    .style("fill", gray4);
-
-		this.xLabel = this.baseSVG.append("text")
-		this.yLabel = this.baseSVG.append("text")			
-		this.yArrow = this.baseSVG.append("line")
-		this.xArrow = this.baseSVG.append("line")
-		this.updateScaleLabels();
-		
-		
-	}
 	
-	updateScaleLabels(){
 
-		this.xLabel
-			.attr("x", 0)
-			.attr("y", this.height + this.margin.top + this.margin.bottom +17)
-			.text(this.scaleLabels.x)
-			.attr("class", "axislabel x")
-
-		this.yLabel
-			.attr("x", -this.height - this.margin.top - this.margin.bottom -5)
-			.attr("y",-2)
-			.attr("transform", "rotate (270)")					
-			.text(this.scaleLabels.y)
-			.attr("class", "axislabel y")
-
-		let xLength = $('.axislabel.x').width() || $('.axislabel.x')[0].getBoundingClientRect().width 
-		let yLength = $('.axislabel.y').width() || $('.axislabel.y')[0].getBoundingClientRect().height 
-		console.log($('.axislabel.y').width(), $('.axislabel.y')[0].getBoundingClientRect().width,  yLength)	
-		this.yArrow
-			.attr("x1", 0)
-			.attr("x2",0)
-			.attr("y1",this.height + this.margin.top + this.margin.bottom +5 )
-			.attr("y2",this.height + this.margin.top + this.margin.bottom - yLength - 10)
-			.attr("class", "scatter-arrow")
-			.attr("marker-end", "url(#triangle)");
-					
-
-		this.xArrow
-			.attr("x1", 0)
-			.attr("x2",xLength +10)
-			.attr("y1",this.height + this.margin.top + this.margin.bottom +5 )
-			.attr("y2",this.height + this.margin.top + this.margin.bottom +5 )
-			.attr("class", "scatter-arrow")						
-			.attr("marker-end", "url(#triangle)");		
-		
-	}
 
 	//////////////////////////////////////////////////////////////////////////////////
 	///// UDPATE.
@@ -389,11 +329,7 @@ class ScatterChart extends ChartBase {
 		this.updateCircles();
 		this.updateCirclesExit();
 		this.updateCirclesEnter();
-		
-		if (this.scaleLabels){
-			this.updateScaleLabels();
-		}
-				
+
 		this.emit("chart:updated", this)					
 		
 	}
