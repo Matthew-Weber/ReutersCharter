@@ -44,25 +44,6 @@ class BespokeChart extends ReutersCharter.BespokeBase {
 */		
 	}
 				
-	xScaleMin (){
-		let startMin = d3.min(this.chartData, (d) => {
-			return d.start;
-		}) 
-		let endMin = d3.min(this.chartData, (d) => {
-			return d.end;
-		})
-		return Math.min(startMin,endMin); 
-	}
-	
-	xScaleMax (){
-		let startMax = d3.max(this.chartData, (d) => {
-			return d.start;
-		}) 
-		let endMax = d3.max(this.chartData, (d) => {
-			return d.end;
-		})
-		return Math.max(startMax,endMax);
-	}
 
 		
 
@@ -74,41 +55,6 @@ class BespokeChart extends ReutersCharter.BespokeBase {
 	render (){
 		this.emit("chart:rendering", this)		
 
-		this.addLines = this.svg.selectAll(".connect-lines")
-			.data(this.chartData)
-			.enter()
-			.append("line")
-			.attrs({
-				x1:(d) => this.scales.x(d.start),
-				x2:(d) => this.scales.x(d.end),
-				y1:(d) => this.scales.y(d.category),
-				y2:(d) => this.scales.y(d.category),
-				class:"connect-lines"
-			})
-
-		this.addStarts = this.svg.selectAll(".start-points")
-			.data(this.chartData)
-			.enter()
-			.append("circle")
-			.attrs({
-				cx:(d) => this.scales.x(d.start),
-				cy:(d) => this.scales.y(d.category),
-				r:5,
-				fill:gray4,
-				class:"start-points"
-			})
-
-		this.addEnds = this.svg.selectAll(".end-points")
-			.data(this.chartData)
-			.enter()
-			.append("circle")
-			.attrs({
-				cx:(d) => this.scales.x(d.end),
-				cy:(d) => this.scales.y(d.category),
-				r:5,
-				fill:red4,
-				class:"end-points"
-			})
 
 
 				
@@ -122,32 +68,6 @@ class BespokeChart extends ReutersCharter.BespokeBase {
 	update(){		
 		this.baseUpdate();
 		this.emit("chart:updating", this)		
-
-		this.addLines
-			.transition()
-			.duration(1000)
-			.attrs({
-				x1:(d) => this.scales.x(d.start),
-				x2:(d) => this.scales.x(d.end),
-				y1:(d) => this.scales.y(d.category),
-				y2:(d) => this.scales.y(d.category),
-			})
-
-		this.addStarts 			
-			.transition()
-			.duration(1000)
-			.attrs({
-				cx:(d) => this.scales.x(d.start),
-				cy:(d) => this.scales.y(d.category),
-			})
-
-		this.addEnds
-			.transition()
-			.duration(1000)		
-			.attrs({
-				cx:(d) => this.scales.x(d.end),
-				cy:(d) => this.scales.y(d.category),
-			})
 
 
 		this.emit("chart:updated", this)					

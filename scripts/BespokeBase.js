@@ -23,7 +23,6 @@ class BespokeBase extends ChartBase {
 		if (!this.tipValuesDisplay.xValue){this.tipValuesDisplay.xValue = this.xValue}
 		if (!this.tipValuesDisplay.yValue){this.tipValuesDisplay.yValue = this.yValue}
 		if (!this.tipValuesDisplay.rValue){this.tipValuesDisplay.rValue = this.rValue}		
-		console.log(this.tipValuesDisplay)		
 
 	}
 
@@ -47,6 +46,9 @@ class BespokeBase extends ChartBase {
 	
 	xScaleRange (){
 		//return range
+		if (this.horizontal){
+			return [this[this.widthOrHeight],0]			
+		}
 		return [0, this[this.widthOrHeight]]
 	}
 
@@ -92,17 +94,18 @@ class BespokeBase extends ChartBase {
 	}
 	
 	yScaleRange (){
+		if (this.horizontal){
+			return [0,this[this.heightOrWidth]]
+		}
 		return [this[this.heightOrWidth],0];		
 	}
 	
 	yScaleDomain (){
 		//determine the domain.
-		console.log(this.chartData)
 		let domain = [this.yScaleMin(),this.yScaleMax()];
 		if (this.yScaleType == "Point" || this.yScaleType == "Band"){
 			domain = this.chartData.map( (d) => d[this.yValue])
 		}
-		console.log(domain)
 		return domain;
 	}
 			
