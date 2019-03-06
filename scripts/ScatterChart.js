@@ -9,9 +9,12 @@ class ScatterChart extends ChartBase {
 	constructor(opts){
 		super(opts);
 		this.chartType = "scatter";	
-		this.legendTemplate = scatterChartLegendTemplate;
-		this.tipTemplate = scatterChartTipTemplate;
-		this.hasLegend = false;
+		if (!this.options.tipTemplate){
+			this.tipTemplate = scatterChartTipTemplate;			
+		}
+		if (!this.options.legendTemplate){
+			this.legendTemplate = scatterChartLegendTemplate;
+		}		this.hasLegend = false;
 		if (!this.options.xAxisLineLength){
 			this.xAxisLineLength = "long";			
 		}

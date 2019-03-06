@@ -39,7 +39,7 @@ class ChartBase extends EventEmitter {
 			colors:[blue3, purple3,orange3, red3,yellow3],
 			dateFormat: d3.timeFormat("%b %Y"),
 			dateParse:	undefined,
-			recessionDateParse :d3.timeParse("%d/%m/%Y"),
+			recessionDateParse :d3.timeParse("%m/%d/%Y"),
 			divisor:1,
 			categorySort:"none",
 			groupSort:"descending",
