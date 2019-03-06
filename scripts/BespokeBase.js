@@ -8,9 +8,12 @@ import scatterChartTipTemplate from '../templates/scatterChartTipTemplate.html'
 class BespokeBase extends ChartBase {
 	constructor(opts){
 		super(opts);
-		this.legendTemplate = scatterChartLegendTemplate;
-		this.tipTemplate = scatterChartTipTemplate;
-
+		if (!this.options.tipTemplate){
+			this.tipTemplate = scatterChartTipTemplate;			
+		}
+		if (!this.options.legendTemplate){
+			this.legendTemplate = scatterChartLegendTemplate;
+		}
 		if (!this.options.xAxisLineLength){
 			this.xAxisLineLength = "long";			
 		}
