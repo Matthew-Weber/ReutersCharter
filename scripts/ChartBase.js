@@ -1758,22 +1758,22 @@ class ChartBase extends EventEmitter {
 			});
 		}
 		this.options.margin = this.options.margin || {};
-		if (!this.options.margin.left){
+		if (!this.options.margin.left && this.options.margin.left !== 0){
 			this.margin.left = 13 +  maxWidth
 			if (this.yorient == "Right"){
 				this.margin.left = 5
 			}
 		}
 
-		if (!this.options.margin.right && this.yorient == "Right"){
+		if (!this.options.margin.right && this.yorient == "Right" && this.options.margin.right !== 0){
 				this.margin.right = 20 + maxWidth
 		}
 		
 		if (this.xorient == "Top"){
-			if (!this.options.margin.top){
+			if (!this.options.margin.top && this.options.margin.top !== 0){
 				this.margin.top = 30;				
 			}
-			if (!this.options.margin.bottom){
+			if (!this.options.margin.bottom && this.options.margin.bottom !== 0){
 				this.margin.bottom = 15;			
 			}			
 		}
