@@ -846,13 +846,6 @@ class ChartBase extends EventEmitter {
 		    .ticks(this[`${this.xOrY}ScaleTicks`])
 		    .tickPadding(8)
 		    .tickFormat(this.xTickFormatter);
-		
-		//change the tic size if it's sideways    
-/*
-		if (this.horizontal){
-			this.xAxis.tickSize(0 - this.height).tickPadding(12);
-		}
-*/
 
 		//forces a tick for every value on the x scale 
 		if (this.tickAll){
@@ -865,10 +858,6 @@ class ChartBase extends EventEmitter {
 				}
 			});
 		}
-		//explicitely set the xvalue.  no worky on category.
-		if (this.xScaleVals && !this.hasZoom){	
-			this[`${this.xOrY}Axis`].tickValues(this.xScaleVals);
-		}			
 		
 	}
 	
@@ -885,19 +874,6 @@ class ChartBase extends EventEmitter {
 			this.yAxis
 			.tickPadding(20);
 		}	
-		//tick size is different depending on layout
-/*
-		if (!this.horizontal){
-			this.yAxis.tickSize(0-this.width);
-		}else{
-			this.yAxis.tickSize(0);
-		}	
-*/			
-
-		//if autoScale ing then let it use the default auto scale.  hasZoom and multiData automatically get auto-scaling
-		if (this.yScaleVals && !this.hasZoom){	
-			this[`${this.yOrX}Axis`].tickValues(this.yScaleVals);
-		}
 			
 	}
 	
@@ -1039,6 +1015,15 @@ class ChartBase extends EventEmitter {
 				this.createSideLayoutAxis();				
 			}						
 		}
+		
+		if (this.yScaleVals && this[`${this.yOrX}Axis`]){	
+			this[`${this.yOrX}Axis`].tickValues(this.yScaleVals);
+		}
+
+		if (this.xScaleVals && this[`${this.xOrY}Axis`]){	
+			this[`${this.xOrY}Axis`].tickValues(this.xScaleVals);
+		}
+		
 		this.emit("chart:axisRendered", this)
 		
 	}
