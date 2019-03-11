@@ -27,7 +27,7 @@ class BarChart extends ChartBase {
 		//figure range for chart, will vary if is stacked bars.
 		let objectNumber = this.numberOfObjects();
 		if (this.chartLayout == "stackPercent" ||  this.chartLayout == "stackTotal"){objectNumber = 1;}
-		let range = [(this.widthOfBar() * objectNumber) / 2, this[this.widthOrHeight] - this.widthOfBar() * objectNumber];
+		let range = [(this.widthOfBar() * objectNumber) / 2, this[this.widthOrHeight] -  ( (this.widthOfBar()/2) * objectNumber)];
 		if (this.chartLayout == "sideBySide"){
 			range = [0, (this[this.widthOrHeight]/(this.chartData.length * (1 + (2 / (this.chartData[0].values.length) ) ) ) )];
 		}
