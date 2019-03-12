@@ -105,7 +105,7 @@ class DataParser extends EventEmitter {
 					_.each(dataPoint, (item,key) => {
 						obj[key] = item;
 					})
-					obj.value = parseFloat(dataPoint[key])
+					obj.value = parseFloat(dataPoint[key]) / this.divisor;
 					obj.name = key;
 					return obj
 				})
@@ -152,13 +152,13 @@ class DataParser extends EventEmitter {
 					currentItemInLoop.cumulatitveTotal = cumulate;
 					currentItemInLoop.cumulativeChange = totalChange;
 					currentItemInLoop.percentChange = percent;
-					currentItemInLoop.value = currentValue / this.divisor;
+					//currentItemInLoop.value = currentValue / this.divisor;
 				}else{
 					currentItemInLoop.changePrePeriod = 0;
 					currentItemInLoop.cumulatitveTotal = currentValue;
 					currentItemInLoop.cumulativeChange = 0;
 					currentItemInLoop.percentChange = 0;
-					currentItemInLoop.value = currentValue / this.divisor;
+					//currentItemInLoop.value = currentValue / this.divisor;
 					cumulate += currentValue;
 				}
 			})			
