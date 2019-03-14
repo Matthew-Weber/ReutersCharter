@@ -225,7 +225,7 @@ class ScatterChart extends ChartBase {
 				closestRange = d;
 			}
 		});
-		closestIndex = rangeArray.indexOf(closestRange);
+		let closestIndex = rangeArray.indexOf(closestRange);
 		this.closestDate = this.scales.x.domain()[closestIndex];
 	}
 	
