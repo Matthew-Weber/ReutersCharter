@@ -122,7 +122,18 @@ class DataParser extends EventEmitter {
 	calculateTransofmations(data){
 		
 		if (this.xValue == "category"){
+			if (this.dataType != "value"){console.log("DATA TRANSFORMATIONS ARE NOT AVAILABLE FOR CATEGORY CHARTS.")}
+			data.forEach( (dataGroup) => {
+				dataGroup.values.forEach( (currentItemInLoop,index) => {
+					let currentValue = currentItemInLoop.value; 
+					currentItemInLoop.changePrePeriod = currentValue;
+					currentItemInLoop.cumulatitveTotal = currentValue;
+					currentItemInLoop.cumulativeChange = currentValue;
+					currentItemInLoop.percentChange = currentValue;			
+				})
+			})
 			return this.categorySorter(data)
+
 		}
 		//if not a category chart, will calculate out all the data transofrmation. 
 		this.emit("data:calculatingTransofmations", this)
