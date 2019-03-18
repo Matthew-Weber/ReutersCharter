@@ -2179,7 +2179,7 @@ class ChartBase extends EventEmitter {
 	labelUpdate ()  {
 		//and update those same.
 		if (!this.annotationGroup){return;}
-		this.annotationData = this.options.annotations()
+		this.annotationData = this.annotations()
 
 		this.makeAnnotations
 			.annotations(this.annotationData)				
