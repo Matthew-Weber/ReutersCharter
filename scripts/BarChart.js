@@ -139,7 +139,7 @@ class BarChart extends ChartBase {
 			return 0;				
 		}
 		let positioner = "y1";
-		if (this.horizontal || d.y1Total < 0 ){ positioner = "y0";}
+		if ((this.horizontal || d.y1Total < 0) && !textPosition){ positioner = "y0";}
 		if (this.horizontal && d.y1Total < 0 ){ positioner = "y1";}
 		if (this.chartLayout == "stackTotal"){ 
 			return this.scales.y(d[`${positioner}Total`]);

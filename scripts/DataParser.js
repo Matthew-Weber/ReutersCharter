@@ -53,7 +53,7 @@ class DataParser extends EventEmitter {
 			}
 			//will parse all the numbers into numbers
 			_.each(point, (value,key) => {
-				if ( !isNaN( parseFloat(value) )  && key != "rawDate" && key != "date" && key != "displayDate"){
+				if ( !isNaN( parseFloat(value) )  && key != "rawDate" && key != "date" && key != "displayDate" && key != "category"){
 					point[key] = parseFloat(value);
 				}
 			})
