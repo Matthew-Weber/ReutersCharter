@@ -865,7 +865,7 @@ class ChartBase extends EventEmitter {
 		let s = d
 		if (this.scaleNumbFormat){
 			s = this.numbFormat(d)
-		}else if( this[`${this.yOrX}Value`] != "category" && d != 0 ){
+		}else if( this[`${this.xOrY}Value`] != "category" && d != 0 ){
 			let decimal = this.determineFormatter(d,i,nodes);
 			let axisForm = d3.format(`,.${decimal}f`)
 			s = axisForm(d)
