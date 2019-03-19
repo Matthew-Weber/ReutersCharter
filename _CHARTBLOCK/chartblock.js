@@ -49,10 +49,11 @@ let stockChart = new ReutersCharter.BarChart({
     //},    
 	//xTickFormat  (d,i,nodes)  {
 	//	return d
-    //},	
+    //},
+    //scaleNumbFormat:true, //activating will force tick values to be formatted by number formatter.	
     //includeXAxis:false,
     //includeYAxis:false,	
-	//xAxisLineLength:"short", //long or short. long will go all the way across, but not under the tick numbers
+	//xAxisLineLength:"short", //long or short or none. long will go all the way across, but not under the tick numbers
 	//yAxisLineLength:"short",				
 
 

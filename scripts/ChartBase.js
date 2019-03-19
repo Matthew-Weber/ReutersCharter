@@ -137,8 +137,15 @@ class ChartBase extends EventEmitter {
 					}					
 				}
 
- 
-				
+				if (this.yAxisLineLength == "none" || (this[`${this.yOrX}Value`] == "category" && ! this.options.yAxisLineLength)){
+					propObj = {
+						lineX1 : 0,
+						lineX2 :0,
+						textX : -12 * rightMod,
+						textDy : 2					
+					}					
+				}
+
 				s.select(".domain").remove();
 				s.selectAll(".tick line").attr("x1", propObj.lineX1).attr("x2", propObj.lineX2)
 				s.selectAll(".tick text").attr("x", propObj.textX).attr("dy", propObj.textDy);
@@ -177,7 +184,15 @@ class ChartBase extends EventEmitter {
 						lineY1 :0,
 						lineY2 : 6 * topMod,
 					}
-				}								
+				}
+				
+				if (this.xAxisLineLength == "none" || (this[`${this.xOrY}Value`] == "category" && ! this.options.xAxisLineLength)){
+					propObj = {
+						lineY1 :0,
+						lineY2 : 0,
+					}					
+				}
+												
 				
 				s.selectAll(".tick line").attr("y1", propObj.lineY1).attr("y2", propObj.lineY2)
 
@@ -347,7 +362,9 @@ class ChartBase extends EventEmitter {
 	tipNumbFormat (d) {
 		//what returns in the value div of the tooltip and the legend.  Can override the defaults here or make logic tests. 
 		if (isNaN(d) === true){return "N/A";}else{
-			return `${this.dataLabels[0]}${this.numbFormat(d)}${this.dataLabels[1]}` ;				
+			let space = " ";
+			if (this.dataLabels[1] == "%"){space = ""}
+			return `${this.dataLabels[0]}${this.numbFormat(d)}${space}${this.dataLabels[1]}` ;				
 		}				
 	}
 
@@ -797,6 +814,18 @@ class ChartBase extends EventEmitter {
 	///// AXIS.
 	//////////////////////////////////////////////////////////////////////////////////  	
 
+	determineFormatter (d,i,nodes){
+		this.axisDecimal = this.axisDecimal || 0;
+		if (Math.floor(d) !== d){
+			let decimal = d.toString().split(".")[1].length || 0;
+			if (decimal > this.axisDecimal){
+				this.axisDecimal = decimal;
+			}			
+		}
+		return this.axisDecimal;		
+	}
+
+
 	yTickFormat (d,i,nodes) {
 		//format for y axis.  if it's date, will use multiformat, or quarter format.
 		//if category, will just return itself.
@@ -808,12 +837,15 @@ class ChartBase extends EventEmitter {
 			return this.multiFormat(d)
 		}
 		
-		let s = d		
+		let s = d
 		if (this.scaleNumbFormat){
 			s = this.numbFormat(d)
+		}else if( this[`${this.yOrX}Value`] != "category" && d != 0 ){
+			let decimal = this.determineFormatter(d,i,nodes);
+			let axisForm = d3.format(`,.${decimal}f`)
+			s = axisForm(d)
 		}
 
-		if (this[`${this.yOrX}Value`] == "category"){ s = d}
 		if (!this.horizontal){
 			return nodes[i].parentNode.nextSibling
 				? "\xa0" + s
@@ -829,8 +861,16 @@ class ChartBase extends EventEmitter {
 			}
 			return this.multiFormat(d)
 		}
-		let s = this.numbFormat(d)			
-		if (this[`${this.xOrY}Value`] == "category" || !this.scaleNumbFormat){ s = d}
+
+		let s = d
+		if (this.scaleNumbFormat){
+			s = this.numbFormat(d)
+		}else if( this[`${this.yOrX}Value`] != "category" && d != 0 ){
+			let decimal = this.determineFormatter(d,i,nodes);
+			let axisForm = d3.format(`,.${decimal}f`)
+			s = axisForm(d)
+		}
+
 		if (this.horizontal){
 			return nodes[i].parentNode.nextSibling
 				? "\xa0" + s
