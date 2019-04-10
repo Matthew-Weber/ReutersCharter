@@ -49,11 +49,14 @@ class LineChart extends ChartBase {
 	
 	yScaleMin (){
 		// y min needs to determine what layout you are using, for will be different in different circumstances.
+		//if (this.chartLayout == "stackTotal"){theValues = "stackTotal";}
+		//if (this.chartLayout == "stackTotal" || this.chartLayout == "stackPercent"){min = 0;}
+
 		let theValues = this.dataType;
-		if (this.chartLayout == "stackTotal"){theValues = "stackTotal";}
+		if (this.chartLayout == "stackTotal"){theValues = "stackMin";}
 		let min = d3.min(this.chartData, (c) => (d3.min(c.values, (v) => v[theValues] ) ) );
 		if (this.chartlayout == "fillLines"){ if (min > 0){min = 0;}}
-		if (this.chartLayout == "stackTotal" || this.chartLayout == "stackPercent"){min = 0;}
+		if (this.chartLayout == "stackPercent"){min = 0;}
 		return min;
 	}
 	
