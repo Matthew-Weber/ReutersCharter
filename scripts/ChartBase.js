@@ -1851,12 +1851,16 @@ class ChartBase extends EventEmitter {
 		this.svg
 			.transition("mainGTransorm")
 			.duration(duration)
+			.attrs({
+				width:this.width,
+				height:this.height,
+			})		
 			.attr("transform", `translate(${this.margin.left},${this.margin.top})`);				
 	}
 	
 	updatePlot(duration){
 		//update the plot rectangle
-		this.svg
+		this.svg.selectAll(".plot")
 			.transition()
 			.duration(duration)		
 			.attrs({
