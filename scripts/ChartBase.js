@@ -159,7 +159,7 @@ class ChartBase extends EventEmitter {
 				g.call(this.xAxis)
 				s.select(".domain").remove();
 				if (this.horizontal){
-					s.selectAll(".tick:last-of-type text").attr("text-anchor", "end")
+					//s.selectAll(".tick:last-of-type text").attr("text-anchor", "end")
 				}
 				
 				let topMod = 1;
@@ -1000,7 +1000,7 @@ class ChartBase extends EventEmitter {
 		//currently i'm not including the trailing label in the axis function.  had alignment problems.  I ccan probably rethink all that and make it work.
 		//in the meantime, i'm basically cloning another tick into there.
 		let paddedLabel = tickLabels[1]
-		if (paddedLabel != "%" && paddedLabel != ""){paddedLabel = "\u00A0"+"\u00A0"+tickLabels[1]}
+		if (paddedLabel != "%" && paddedLabel != ""){paddedLabel = "\u00A0"+tickLabels[1]}
 		d3.selectAll(`#${this.targetDiv} .topTick`).remove();
 
 		let topTick =  $(`#${this.targetDiv} .${this.yOrX}.axis .tick:last-of-type`).find("text");
