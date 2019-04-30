@@ -117,10 +117,10 @@ let stockChart = new ReutersCharter.BarChart({
 	///// TEMPLATES              //////
 	///////////////////////////////////
 
-	//tipTemplate:Reuters.Graphics.Template.tooltip,
-	//chartTemplate:Reuters.Graphics.Template.chartTemplate,
-	//legendTemplate: Reuters.Graphics.Template.legendTemplate,
-	//timelineTemplate:Reuters.Graphics.Template.tooltipTimeline,	
+	//tipTemplate:tooltip,
+	//chartTemplate:chartTemplate,
+	//legendTemplate:legendTemplate,
+	//timelineTemplate:tooltipTimeline,	
 
 	///////////////////////////////////
 	///// DATASTREAM             //////
