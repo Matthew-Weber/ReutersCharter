@@ -577,3 +577,68 @@ rect.bar.lighter{
 .scatter-arrow{
 	stroke:$gray4;
 }
+
+
+.geography{
+	stroke:white;
+	stroke-width:1px;
+	&:hover{
+		fill:#404041 !important;
+	}
+}		
+.geographyLabel{
+	pointer-events: none;
+	fill:black;
+	text-transform: uppercase;
+	font-size: $font-size-xs;
+	cursor:pointer;
+	text-anchor:middle;
+	&.left-align{
+		text-anchor:start;
+	}
+   @include media-breakpoint-down(xs){
+		display:none;
+	}
+}
+.legendBox{
+	height:12px;
+	width:12px;
+	display:inline-block;
+	&.hash{
+        background:repeating-linear-gradient(-45deg,$gray1,$gray1 1.5px,white 0,white 4px);
+	}
+}
+.legendBoxwide{
+	height:8px;
+	width:100%;	
+	&.hash{
+        background:repeating-linear-gradient(-45deg,$gray1,$gray1 1.5px,white 0,white 4px);
+	}
+}
+.map-legend-text{
+    font-size: $font-size-sm;
+}
+.map-legend-holder{
+	min-width:100px;
+	margin-right:2px;
+}
+.map-tip{
+	line-height: 1.2;
+	.dateTip{
+		font-weight: 700;
+	}
+	.tipHolder{
+		margin-top:5px;
+		width:100%;
+		display:flex;
+		.nameTip{
+			width:50%;
+		}
+		.valueTip{
+			width:50%;
+			text-align: right;
+			
+		}
+	}
+	
+}

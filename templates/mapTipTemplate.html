@@ -1,0 +1,29 @@
+<div class="map-tip">
+	<div class='dateTip'><%=t.d.properties.STATE%></div>
+	<%if (!t.self.tipValuesDisplay){%>
+		<div class='valueTip'>
+			<%=t.d.properties[t.self.colorValue]%>
+		</div>
+	
+	<%}else{
+	
+		_.each(t.self.tipValuesDisplay, function(display,key){%>
+			<div class="tipHolder">
+				<div class='nameTip'>
+					<%=display%>
+				</div>
+				<div class='valueTip'>
+					<%=t.d.properties[key]%>
+				</div>
+		
+			</div>
+		<%})%>
+	
+	<%}%>
+	
+	<%if (t.d.properties[t.self.hashValue]){%>
+		<div class='dateTip mt-2'><%=t.self.hashValueDisplay%></div>
+		
+	<%}%>
+	
+</div>

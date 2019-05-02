@@ -1,0 +1,18 @@
+<div class="d-flex flex-wrap">
+	<% t.self.scaleDisplay.forEach(function(d,i){%> 
+		<div class="map-legend-holder">
+			<div class="legendBoxwide" style="background-color:<%=t.self.colorRange[i]%>;"></div>
+			<div class="map-legend-text"><%=d%></div>
+		</div>
+	<%})%>
+	<%if (t.self.hashValue){%>
+		<div class="map-legend-holder">
+			<div class="legendBoxwide hash"></div>
+			<div class="map-legend-text"><%= t.self.hashValueDisplay%></div>
+		</div>
+		
+	<%}%>
+
+</div>
+
+<div id="<%=t.self.targetDiv%>graphic"></div>
