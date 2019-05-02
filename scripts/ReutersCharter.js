@@ -3,7 +3,6 @@ import { BarChart } from './BarChart.js'
 import { ScatterChart } from './ScatterChart.js'
 import { DataStreamParse } from './DataStreamParse.js'
 import { BespokeBase } from './BespokeBase.js'
-import { MapCharter } from './MapCharter.js'
 
 let ReutersCharter = {
 	LineChart:LineChart,
@@ -11,7 +10,7 @@ let ReutersCharter = {
 	DataStreamParse:DataStreamParse,
 	ScatterChart:ScatterChart,
 	BespokeBase:BespokeBase,
-	MapCharter:MapCharter
 }
 
+export { MapCharter } from './MapCharter.js'
 export default ReutersCharter

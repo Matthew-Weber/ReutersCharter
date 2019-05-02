@@ -1,6 +1,7 @@
+import { MapCharter } from "ReutersCharter"
 
 	//US MAP
-	let map = new ReutersCharter.MapCharter({
+	let map = new MapCharter({
 		el: "#reutersGraphic-chart1",
 		mapShapeURL: "//graphics.thomsonreuters.com/mapshapes/us-simple.json",
 		dataURL:"data/mapdata.csv",
@@ -36,7 +37,7 @@
 	
 	
 	//EUROPE MAP
-	let europemap = new ReutersCharter.MapCharter({
+	let europemap = new MapCharter({
 		el: "#reuters-map",
 		mapShapeURL: "//graphics.thomsonreuters.com/mapshapes/europe.json",
 		dataURL:"//d3sl9l9bcxfb5q.cloudfront.net/json/cc_scotus_abortion_map_county",
@@ -72,7 +73,7 @@
 
 
 	//WORLD MAP
-	letworldMap = new ReutersCharter.MapCharter({
+	letworldMap = new MapCharter({
 		el: "#reuters-map",
 		mapShapeURL: "//graphics.thomsonreuters.com/mapshapes/world.json",
 		dataURL:"//d3sl9l9bcxfb5q.cloudfront.net/json/cc_zika_world",
