@@ -316,6 +316,8 @@ class MapCharter extends EventEmitter {
 			return this.t.url();	
 		}
 
+		if (!d.properties[this.colorValue]){return gray1}
+
 		return 	this.colorScale(d.properties[this.colorValue]);
 
 		

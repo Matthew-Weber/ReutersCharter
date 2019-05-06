@@ -15,7 +15,7 @@ import { MapCharter } from "ReutersCharter"
 		heightModifier:.59,
 //		legendTemplate:Reuters.Graphics.Template.maplegend,
 //		tooltipTemplate:Reuters.Graphics.Template.maptooltip,
-		scaleType:"Threshold", //"Threshold
+		scaleType:"Threshold", // can be Ordinal
 		colorValue:"numbers",		
 
 		//FOR ORDINAL SCALES
@@ -41,7 +41,7 @@ import { MapCharter } from "ReutersCharter"
 		el: "#reuters-map",
 		mapShapeURL: "//graphics.thomsonreuters.com/mapshapes/europe.json",
 		dataURL:"//d3sl9l9bcxfb5q.cloudfront.net/json/cc_scotus_abortion_map_county",
-		projection: "mercator",
+		projection: "Mercator",
 		objectName:"countries",
 		dataIdProperty:"iso",
 		labelColumn:"displaynam",
@@ -50,9 +50,9 @@ import { MapCharter } from "ReutersCharter"
 		scaleModifier:1,
 		heightModifier:1.25,
 		
-//		legendTemplate:Reuters.Graphics.Template.maplegend,
-//		tooltipTemplate:Reuters.Graphics.Template.maptooltip,
-		scaleType:"Threshold", //"Threshold
+//		legendTemplate:maplegend,
+//		tooltipTemplate:maptooltip,
+		scaleType:"Threshold", // can be Ordinal
 		colorValue:"numbers",		
 
 		//FOR ORDINAL SCALES
@@ -77,17 +77,17 @@ import { MapCharter } from "ReutersCharter"
 		el: "#reuters-map",
 		mapShapeURL: "//graphics.thomsonreuters.com/mapshapes/world.json",
 		dataURL:"//d3sl9l9bcxfb5q.cloudfront.net/json/cc_zika_world",
-		projection: "mercator",
+		projection: "Mercator",
 		objectName:"countries",
-		dataIdProperty:"iso",
+		dataIdProperty:"colorid",
 		labelColumn:"displaynam",
 		center:[ 1,30],
 		rotate:[-1.4,0],
 		scaleModifier:.16,
 		heightModifier:.6,
-//		legendTemplate:Reuters.Graphics.Template.maplegend,
-//		tooltipTemplate:Reuters.Graphics.Template.maptooltip,
-		scaleType:"Threshold", //"Threshold
+//		legendTemplate:maplegend,
+//		tooltipTemplate:maptooltip,
+		scaleType:"Threshold", // Can be Ordinal
 		colorValue:"numbers",		
 
 		//FOR ORDINAL SCALES
