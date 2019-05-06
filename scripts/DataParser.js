@@ -127,7 +127,7 @@ class DataParser extends EventEmitter {
 				dataGroup.values.forEach( (currentItemInLoop,index) => {
 					let currentValue = currentItemInLoop.value; 
 					currentItemInLoop.changePrePeriod = currentValue;
-					currentItemInLoop.cumulatitveTotal = currentValue;
+					currentItemInLoop.cumulativeTotal = currentValue;
 					currentItemInLoop.cumulativeChange = currentValue;
 					currentItemInLoop.percentChange = currentValue;			
 				})
@@ -160,13 +160,13 @@ class DataParser extends EventEmitter {
 					cumulate += currentValue;
 					let percent = ((currentValue / firstValue) - 1) * 100;
 					currentItemInLoop.changePrePeriod = change;
-					currentItemInLoop.cumulatitveTotal = cumulate;
+					currentItemInLoop.cumulativeTotal = cumulate;
 					currentItemInLoop.cumulativeChange = totalChange;
 					currentItemInLoop.percentChange = percent;
 					//currentItemInLoop.value = currentValue / this.divisor;
 				}else{
 					currentItemInLoop.changePrePeriod = 0;
-					currentItemInLoop.cumulatitveTotal = currentValue;
+					currentItemInLoop.cumulativeTotal = currentValue;
 					currentItemInLoop.cumulativeChange = 0;
 					currentItemInLoop.percentChange = 0;
 					//currentItemInLoop.value = currentValue / this.divisor;

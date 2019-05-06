@@ -8,10 +8,10 @@ let stockChart = new ReutersCharter.BarChart({
 	////////////////////////////
 	
 	dataURL: '//d3sl9l9bcxfb5q.cloudfront.net/json/mw-disney-earns',
-	//dataTransformation:"none", //none, changePrePeriod, cumulatitveTotal, cumulativeChange, percentChange
+	//dataTransformation:"none", //none, changePrePeriod, cumulativeTotal, cumulativeChange, percentChange
 	//divisor:.001,	
 	//multiDataColumns:{"gpd":"GDP","unemployment":"Unemployment"}, //can set as an object, or as two arrays below.
-	//multiDataColumns:["gpd","unemployment"],//can use value, changePrePeriod, cumulatitveTotal, cumulativeChange, percentChange
+	//multiDataColumns:["gpd","unemployment"],//can use value, changePrePeriod, cumulativeTotal, cumulativeChange, percentChange
 	//multiDataLabels:[gettext("VALUE"),gettext("PERCENT")],
 	//xValue:'days', //for scatter plots, or two linear scales of line charts.
 	//yValue:'otherThing',
