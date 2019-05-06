@@ -316,6 +316,12 @@ class ScatterChart extends ChartBase {
 			.attr("class", "scatter-dot")
 			.style("fill", (d) => this.setFill(d))				
 			.style("stroke", (d) => this.setStroke(d))
+			
+		if (this.simpleTips){
+			this.scatterPlot.attr("title", (d) => this.tipTemplate({this:self, data:[d]}) )
+		
+			this.$(".scatter-dot").tooltip({html:true})
+		}
 	}
 	
 
@@ -352,7 +358,17 @@ class ScatterChart extends ChartBase {
 				}else{
 					return this.hardRadius;
 				}
-			})			
+			})
+			.attr("title", (d) => {
+				if (this.simpleTips){
+					return this.tipTemplate({this:self, data:[d]}) 
+				}
+			})
+				
+		if (this.simpleTips){
+			this.$(".scatter-dot").tooltip({html:true})
+		}			
+						
 	}
 	
 	updateCirclesExit(){
@@ -382,7 +398,17 @@ class ScatterChart extends ChartBase {
 				}else{
 					return this.hardRadius;
 				}
-			})			
+			})
+			.attr("title", (d) => {
+				if (this.simpleTips){
+					return this.tipTemplate({this:self, data:[d]}) 
+				}
+			})
+				
+		if (this.simpleTips){
+			this.$(".scatter-dot").tooltip({html:true})
+		}			
+						
 	}	
 
 	

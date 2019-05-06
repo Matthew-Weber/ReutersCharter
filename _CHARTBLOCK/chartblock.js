@@ -158,6 +158,7 @@ let stockChart = new ReutersCharter.BarChart({
 	//rValue:"circlesize",
 	//xValue:'google', 
 	//yValue:'apple',
+	//simpleTips:true,
 	//scaleLabels:{
 	//	x:"Inflation",
 	//	y:"Unemployment"

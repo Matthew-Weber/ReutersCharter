@@ -333,7 +333,8 @@ class ChartBase extends EventEmitter {
 		this.emit("chart:settingOptions", this)
 
 		//sets piles of options based on chart block options and data.
-		this.$el = $(this.el)
+		this.$el = $(this.el);
+		this.setOptTooltips();
 		this.setOptPolling();			
 		this.setOptMultiData(data);		
 		this.setOptCategory(data);
@@ -357,6 +358,13 @@ class ChartBase extends EventEmitter {
 		
 		this.emit("chart:optionsSet", this)
 
+	}
+	
+	setOptTooltips (){
+		if (this.simpleTips){
+			this.options.showTip = "off";
+			this.showTip = "off"
+		}
 	}
 
 	tipNumbFormat (d) {
