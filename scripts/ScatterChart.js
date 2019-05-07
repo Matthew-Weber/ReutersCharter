@@ -265,7 +265,19 @@ class ScatterChart extends ChartBase {
 		
 	}
 				
-	
+	setOptRValue (){
+		
+		if (this.rValue){
+			this.radiusModifier = this.rValue.multiplier;
+			
+			if (typeof this.rValue.data == "number"){
+				this.hardRadius = this.rValue.data;
+				this.rValue = false;
+			}else{
+				this.rValue = this.rValue.data;
+			}	
+		}
+	}	
 
 	//////////////////////////////////////////////////////////////////////////////////
 	///// render.
@@ -276,7 +288,7 @@ class ScatterChart extends ChartBase {
 		this.emit("chart:rendering", this)		
 
 		this.$("svg").css({"overflow":"visible"});
-
+		this.setOptRValue();
 		this.appendCircles();
 				
 		this.emit("chart:rendered", this)		

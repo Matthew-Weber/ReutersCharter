@@ -153,9 +153,10 @@ let stockChart = new ReutersCharter.BarChart({
 	////////////////////////
 	//idField:"id",
 	//colorValue:"colors",
-	//hardRadius:10,
-	//radiusModifier:40,
-	//rValue:"circlesize",
+	//rValue:{
+		//data:"columnName", // a column in your data OR an integer
+		//multiplier:0.6 // an integer
+	//},
 	//xValue:'google', 
 	//yValue:'apple',
 	//simpleTips:true,
