@@ -232,10 +232,27 @@ class BarChart extends ChartBase {
 		if (this.markDataPoints){
 			this.addBarLabels();
 		}
+		if (this.annotations){
+			this.updateAnnotationOrder()
+		}		
 				
 		this.emit("chart:rendered", this)		
 	}
 
+	updateAnnotationOrder(){
+		this.svg.selectAll("g.annotation-group, g.barChart")
+			.sort(function(a,b){
+				let aValue = 0;
+				let bValue = 0;
+				if (a){aValue = 1};
+				if (b){bValue = 1};
+				if (aValue < bValue){return 1}
+				if (aValue > bValue){return -1}
+			})
+			.order()
+		
+		
+	}
 	
 	appendBarGs(){
 		//a g for each column of data.  data-index will return index of these parent elements to be used in subsequent calculations.
