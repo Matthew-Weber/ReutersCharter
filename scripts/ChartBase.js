@@ -94,7 +94,7 @@ class ChartBase extends EventEmitter {
 			xAxisLineLength:"default",	
 			customYAxis: (g) =>{
 				let s = g.selection ? g.selection() : g;
-				g.call(this.yAxis)
+				this.yAxis(g)
 
 				let rightMod = 1;
 				let rightMarg = -this.margin.left;
@@ -155,8 +155,9 @@ class ChartBase extends EventEmitter {
 				if (s !== g) g.selectAll(".tick text").attrTween("x", null).attrTween("dy", null);		
 			},
 			customXAxis: (g) =>{
+				
 				let s = g.selection ? g.selection() : g;
-				g.call(this.xAxis)
+				this.xAxis(g)
 				s.select(".domain").remove();
 				if (this.horizontal){
 					//s.selectAll(".tick:last-of-type text").attr("text-anchor", "end")
@@ -941,7 +942,8 @@ class ChartBase extends EventEmitter {
 				if (this.chartLayout != "sideBySide"){ i = 0;}
 			    return `translate(${((i * (this[this.widthOrHeight] / this.numberOfObjects()))+sideAdjust)},${toptrans})`	
 		     })
-	        .call(this.customXAxis);				
+
+		this.customXAxis(this.addXAxis);
 	}
 	
 
@@ -962,7 +964,8 @@ class ChartBase extends EventEmitter {
 	        	}
 
         	})
-	    	.call(this.customYAxis); 	
+        	
+	    	this.customYAxis(this.addYAxis) 	
 	}
 	
 
@@ -1911,7 +1914,7 @@ class ChartBase extends EventEmitter {
 			this.adjustXTicks()
 		}
 
-	    d3.selectAll(`#${this.targetDiv} .x.axis`)
+		this.customXAxis(d3.selectAll(`#${this.targetDiv} .x.axis`)
 			.transition("xAxisTransition")
 			.duration(duration)	    
 	        .attr("transform", (d,i) => {
@@ -1926,7 +1929,9 @@ class ChartBase extends EventEmitter {
 				if (this.chartLayout != "sideBySide"){ i = 0;}
 			    return `translate(${((i * (this[this.widthOrHeight] / this.numberOfObjects()))+sideAdjust)},${toptrans})`	
 		     })
-	        .call(this.customXAxis);					
+		)
+		     
+
 	}	
 	
 	updateYAxis(duration){
@@ -1945,7 +1950,6 @@ class ChartBase extends EventEmitter {
 	        	}
 
         	})
-	    	.call(this.customYAxis)
 			.on("end", (d) => {
 				//ok, this is bizarre.  but basically i need to run the update twice, right?  to readjust for the left margin.  but i don't want the second to run and cancel out all of the transitions.  In newer d3, i can probbaly get around this by naming all the transitions, but not there yes.  so basically this waits for the transition of this axis to end, and then re-runs the update.  some logic w/ update count and first run keeps this from happening over and over forever.
 				this.topTick(this.dataLabels)						
@@ -1968,7 +1972,7 @@ class ChartBase extends EventEmitter {
 
 			this.topTick(this.dataLabels)						
 	    	 	
-		
+		this.customYAxis(this.addYAxis)
 		
 	}	
 
