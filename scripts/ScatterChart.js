@@ -356,7 +356,7 @@ class ScatterChart extends ChartBase {
 	}
 	
 	updateCircles(){
-		this.scatterPlot
+		this.svg.selectAll(".scatter-dot")
 			.data(this.chartData, (d) => d[this.idField] )
 			.transition()
 			.duration(1000)
@@ -384,7 +384,7 @@ class ScatterChart extends ChartBase {
 	}
 	
 	updateCirclesExit(){
-		this.scatterPlot
+		this.svg.selectAll(".scatter-dot")
 			.data(this.chartData, (d) => d[this.idField] )
 			.exit()
 			.transition()
@@ -393,7 +393,7 @@ class ScatterChart extends ChartBase {
 	}
 	
 	updateCirclesEnter(){
-		this.scatterPlot
+		this.svg.selectAll(".scatter-dot")
 			.data(this.chartData, (d) => d[this.idField] )
 			.enter()
 			.append("circle")
