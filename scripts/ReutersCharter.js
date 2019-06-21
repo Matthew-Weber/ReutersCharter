@@ -12,5 +12,5 @@ let ReutersCharter = {
 	BespokeBase:BespokeBase,
 }
 
-export { MapCharter } from './MapCharter.js'
+//export { MapCharter } from './MapCharter.js'
 export default ReutersCharter

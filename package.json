@@ -5,7 +5,9 @@
     "url": "http://graphics.reuters.com/"
   },
   "bundleDependencies": false,
-  "dependencies": {},
+  "dependencies": {
+	  "Reuters-MapCharter": "https://github.com/Matthew-Weber/ReutersCharter-MapCharter.git"
+  },
   "deprecated": false,
   "description": "Reuters charter",
   "devDependencies": {
@@ -41,5 +43,5 @@
     "pub": "np",
     "test": "xo src/**/*.js && xo tests/**/*.js && tape tests/**/*.js | faucet"
   },
-  "version": "1.0.39"
+  "version": "1.0.40"
 }
