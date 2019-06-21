@@ -1,4 +1,5 @@
-import { MapCharter } from "ReutersCharter"
+import MapCharter from "ReutersCharter-MapCharter"
+
 
 	//US MAP
 	let map = new MapCharter({
