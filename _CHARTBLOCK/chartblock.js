@@ -77,6 +77,7 @@ let stockChart = new ReutersCharter.BarChart({
 	///////////////////////////////////
 
 	//colorUpDown:true,
+	//colorByCat:true,	
 	//hashAfterDate:"01/01/2016",
 	//markDataPoints:true,
 	//lineType: "linear",//Step, StepAfter, StepBefore
