@@ -173,7 +173,10 @@ class BarChart extends ChartBase {
 	
 	barFill (d,i,j){
 		//see prior note, re: j. color up down just returns the first and second items of the color range. outline bar will put none on the second item. hash after checks the date, and applies textures if past a certain point.
-		let color = this.colorScale(d.name)
+		let color = this.colorScale(d.name);
+		if (this.colorByCat){
+			let color = this.colorScale(d.name);			
+		}
 		if (this.colorUpDown){
 			if (d[this.dataType] > 0){
 				color = this.colorScale.range()[0];

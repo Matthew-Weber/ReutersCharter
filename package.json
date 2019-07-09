@@ -43,5 +43,5 @@
     "pub": "np",
     "test": "xo src/**/*.js && xo tests/**/*.js && tape tests/**/*.js | faucet"
   },
-  "version": "1.0.42"
+  "version": "1.0.43"
 }
