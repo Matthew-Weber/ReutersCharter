@@ -3,7 +3,6 @@ import { BarChart } from './BarChart.js'
 import { ScatterChart } from './ScatterChart.js'
 import { DataStreamParse } from './DataStreamParse.js'
 import { BespokeBase } from './BespokeBase.js'
-import { BespokeBase } from './BespokeBase.js'
 import { RelatedStories } from './RelatedStories.js'
 
 let ReutersCharter = {
