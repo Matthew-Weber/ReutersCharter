@@ -33,7 +33,7 @@ class RelatedStories extends EventEmitter {
 	
 	fetchDataSheet () {	
 
-		$.ajax({url: "http://d3sl9l9bcxfb5q.cloudfront.net/json/mw-highlights", success: (result) => {
+		$.ajax({url: "https://d3sl9l9bcxfb5q.cloudfront.net/json/mw-highlights", success: (result) => {
 			this.data = []
 			result.forEach((d,i) => {
 				if (i < 4){
