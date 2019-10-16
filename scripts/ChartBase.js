@@ -229,32 +229,24 @@ class ChartBase extends EventEmitter {
 		//test if trying to load csv, or sheets url, or just passing in ready made object
 		if (this.dataURL.indexOf("csv") == -1 && !_.isObject(this.dataURL)){
 			d3.json(this.dataURL).then( (data) => {
-			  this.parseData (data);
+			  this.preRender (data);
 			});
 		} 
 		if (this.dataURL.indexOf("csv") > -1){
 			d3.csv(this.dataURL).then( (data) => {
-			  this.parseData (data);
+			  this.preRender (data);
 			});
 		}
 		if (_.isObject(this.dataURL)){
 			setTimeout( () => {
-				this.parseData (this.dataURL);											
+				this.preRender (this.dataURL);											
 			}, 100);
 		}		
 		
 	}
 
 	parseData (data) {
-		this.emit("data:parsing", this)
-
-		//make deep copy of data, in case using object in several charts
-		data = JSON.parse(JSON.stringify(data));
-		//if it's datastream will reconfigure datastream raw data to charter format
-		this.setDataStream(data);		
-		//run through setting properties on class based on options chosen in charter block.
-		this.setOptions(this.data);
-		
+		this.data = data;
 		//run dataParser.  For line and bar charts makes an array of objects for each column header being plotted, and array of data points under value.
 		//see dataparser module.
 		//if there is multidatacolumns will make a copy of the data under each "type" in data.  and set the current one to this.data.
@@ -280,6 +272,20 @@ class ChartBase extends EventEmitter {
 		this.data = this[ this.multiDataColumns[this.multiDataColumns.length - 1] ]
 		//chart data is different then main data in that it removes any data columns that are filtered out (pressed on legend button, for instance)  also re-runs the sorts and the stack bar logic upon removal or addition of data.
 		this.chartData = this.makeChartData (this.data)
+	
+	}	
+
+	preRender (data) {
+		this.emit("data:parsing", this)
+
+		//make deep copy of data, in case using object in several charts
+		data = JSON.parse(JSON.stringify(data));
+		//if it's datastream will reconfigure datastream raw data to charter format
+		this.setDataStream(data);		
+		//run through setting properties on class based on options chosen in charter block.
+		this.setOptions(this.data);
+		
+		this.parseData(this.data);
 		
 		//renders all the things.  Render is called from extended chart.  is not in base chart.
 		this.baseRender();
